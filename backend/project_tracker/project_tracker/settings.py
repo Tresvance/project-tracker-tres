@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,8 +25,7 @@ SECRET_KEY = 'django-insecure-o*wq(uzdk)$tjqi8$p@azrstrd#nz-i))n$+g_e0%3qhkr%6m4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['194.164.148.205', 'track.tresvance.com', '127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -53,6 +52,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ALLOW_ALL_ORIGINS = True
+
+CSRF_TRUSTED_ORIGINS = ['https://track.tresvance.com']
 
 ROOT_URLCONF = 'project_tracker.urls'
 
@@ -120,3 +121,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+
+# Add this line
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # this is the folder where collectstatic will store files
