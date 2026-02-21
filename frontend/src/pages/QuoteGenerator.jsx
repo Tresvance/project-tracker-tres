@@ -173,12 +173,13 @@ function AdminPanel(props) {
 
   const [section, setSection] = useState("client");
   const sections = [
-    { id: "client", label: "📋 Client Info" },
-    { id: "pages", label: "📄 Pages & Features" },
+    { id: "client", label: " Client Info" },
+    { id: "pages", label: " Pages & Features" },
     { id: "additional", label: "⚙ Additional Features" },
-    { id: "pricing", label: "💰 Pricing" },
-    { id: "terms", label: "📜 Terms & Conditions" },
-    { id: "payment", label: "💳 Payment Details" },
+    { id: "pricing", label: " Pricing" },
+    { id: "terms", label: " Terms & Conditions" },
+    { id: "payment", label: " Payment Details" },
+    { id: "estimator", label: " Cost Estimator" },
   ];
 
   return (
@@ -200,6 +201,7 @@ function AdminPanel(props) {
         {section === "pricing" && <PricingSection quote={quote} addPriceModule={addPriceModule} removePriceModule={removePriceModule} updatePriceModule={updatePriceModule} totalPrice={totalPrice} />}
         {section === "terms" && <TermsSection quote={quote} updateQuote={updateQuote} addTerm={addTerm} removeTerm={removeTerm} updateTerm={updateTerm} />}
         {section === "payment" && <PaymentSection quote={quote} updateNested={updateNested} />}
+        {section === "estimator" && <CostEstimatorSection />}
       </div>
     </div>
   );
@@ -449,6 +451,232 @@ function PaymentSection({ quote, updateNested }) {
   );
 }
 
+
+// ─── COST ESTIMATOR ──────────────────────────────────────────────────────────
+
+const PAGE_COMPLEXITY = {
+  simple: { label: "Simple", desc: "Static info page, no interactions", hours: 8 },
+  medium: { label: "Medium", desc: "Dynamic content, forms, calculator", hours: 20 },
+  complex: { label: "Complex", desc: "Dashboard, portal, heavy integrations", hours: 40 },
+};
+
+const PHASE_HOURS = [
+  { phase: "Business Analysis & Planning", simple: 4, medium: 6, complex: 10 },
+  { phase: "UI/UX Design (per page)", simple: 3, medium: 6, complex: 12 },
+  { phase: "Frontend Development (per page)", simple: 4, medium: 10, complex: 20 },
+  { phase: "Backend / Logic (per page)", simple: 1, medium: 4, complex: 8 },
+  { phase: "Testing & QA (per page)", simple: 1, medium: 3, complex: 6 },
+  { phase: "Deployment & Setup (fixed)", simple: 4, medium: 6, complex: 8 },
+];
+
+function CostEstimatorSection() {
+  const [hourlyRate, setHourlyRate] = useState(500);
+  const [pages, setPages] = useState([{ name: "Home Page", complexity: "medium" }]);
+  const [bufferPct, setBufferPct] = useState(20);
+
+  const addEstPage = () => setPages(p => [...p, { name: "", complexity: "medium" }]);
+  const removeEstPage = (i) => setPages(p => p.filter((_, idx) => idx !== i));
+  const updateEstPage = (i, field, val) => setPages(p => { const n = [...p]; n[i] = { ...n[i], [field]: val }; return n; });
+
+  const pageBreakdown = pages.map(pg => {
+    const c = pg.complexity;
+    const hours = PHASE_HOURS.reduce((sum, ph) => {
+      if (ph.phase.includes("fixed")) return sum + ph[c];
+      return sum + ph[c];
+    }, 0);
+    return { ...pg, hours, cost: hours * hourlyRate };
+  });
+
+  const subtotalHours = pageBreakdown.reduce((s, p) => s + p.hours, 0);
+  const subtotalCost = subtotalHours * hourlyRate;
+  const bufferHours = Math.round(subtotalHours * bufferPct / 100);
+  const bufferCost = bufferHours * hourlyRate;
+  const totalHours = subtotalHours + bufferHours;
+  const totalCost = subtotalCost + bufferCost;
+
+  const toWords = (n) => {
+    if (!n) return "";
+    const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+    const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    if (n < 20) return ones[n];
+    if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? " "+ones[n%10] : "");
+    if (n < 1000) return ones[Math.floor(n/100)] + " Hundred" + (n%100 ? " "+toWords(n%100) : "");
+    if (n < 100000) return toWords(Math.floor(n/1000)) + " Thousand" + (n%1000 ? " "+toWords(n%1000) : "");
+    if (n < 10000000) return toWords(Math.floor(n/100000)) + " Lakh" + (n%100000 ? " "+toWords(n%100000) : "");
+    return toWords(Math.floor(n/10000000)) + " Crore" + (n%10000000 ? " "+toWords(n%10000000) : "");
+  };
+
+  const complexityColor = { simple: "#4a7a30", medium: "#c9a84c", complex: "#c0392b" };
+
+  return (
+    <div>
+      <SectionTitle> Project Cost Estimator</SectionTitle>
+
+   
+
+      {/* Rate & Buffer */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+        <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 8, padding: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Your Hourly Rate (₹)</div>
+          <input
+            type="number"
+            value={hourlyRate}
+            onChange={e => setHourlyRate(Number(e.target.value))}
+            style={{ ...inpE, fontSize: 22, fontWeight: "bold", color: "#1a2744", padding: "8px 12px" }}
+          />
+          <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>e.g. ₹500/hr = ₹4,000/day</div>
+        </div>
+        <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 8, padding: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Buffer / Contingency %</div>
+          <input
+            type="number"
+            value={bufferPct}
+            onChange={e => setBufferPct(Number(e.target.value))}
+            style={{ ...inpE, fontSize: 22, fontWeight: "bold", color: "#1a2744", padding: "8px 12px" }}
+          />
+          <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>Extra % added for revisions & unexpected work</div>
+        </div>
+      </div>
+
+      {/* Complexity Reference */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontWeight: "bold", color: "#1a2744", fontSize: 13, marginBottom: 10, fontFamily: "Arial, sans-serif" }}>Complexity Guide  Hours per Page</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+          {Object.entries(PAGE_COMPLEXITY).map(([key, val]) => (
+            <div key={key} style={{ background: "white", border: `2px solid ${complexityColor[key]}`, borderRadius: 8, padding: 12 }}>
+              <div style={{ fontWeight: "bold", color: complexityColor[key], fontSize: 13, marginBottom: 4 }}>{val.label}</div>
+              <div style={{ fontSize: 11, color: "#666", marginBottom: 6 }}>{val.desc}</div>
+              <div style={{ fontWeight: "bold", color: "#1a2744", fontSize: 18 }}>{val.hours} hrs</div>
+              <div style={{ fontSize: 11, color: "#999" }}>≈ ₹{(val.hours * hourlyRate).toLocaleString("en-IN")}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Hour breakdown table */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontWeight: "bold", color: "#1a2744", fontSize: 13, marginBottom: 10, fontFamily: "Arial, sans-serif" }}>⏱ Hour Breakdown by Phase (per page)</div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr>
+              <th style={{ ...thE, textAlign: "left" }}>Phase</th>
+              <th style={thE}>Simple</th>
+              <th style={thE}>Medium</th>
+              <th style={thE}>Complex</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PHASE_HOURS.map((ph, i) => (
+              <tr key={i}>
+                <td style={{ ...tdE, color: "#333" }}>{ph.phase}</td>
+                <td style={{ ...tdE, textAlign: "center", color: "#4a7a30", fontWeight: "bold" }}>{ph.simple}h</td>
+                <td style={{ ...tdE, textAlign: "center", color: "#c9a84c", fontWeight: "bold" }}>{ph.medium}h</td>
+                <td style={{ ...tdE, textAlign: "center", color: "#c0392b", fontWeight: "bold" }}>{ph.complex}h</td>
+              </tr>
+            ))}
+            <tr>
+              <td style={{ ...tdE, fontWeight: "bold", color: "#1a2744" }}>TOTAL per page</td>
+              <td style={{ ...tdE, textAlign: "center", fontWeight: "bold", color: "#4a7a30" }}>{PHASE_HOURS.reduce((s,p)=>s+p.simple,0)}h</td>
+              <td style={{ ...tdE, textAlign: "center", fontWeight: "bold", color: "#c9a84c" }}>{PHASE_HOURS.reduce((s,p)=>s+p.medium,0)}h</td>
+              <td style={{ ...tdE, textAlign: "center", fontWeight: "bold", color: "#c0392b" }}>{PHASE_HOURS.reduce((s,p)=>s+p.complex,0)}h</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pages list */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontWeight: "bold", color: "#1a2744", fontSize: 13, marginBottom: 10, fontFamily: "Arial, sans-serif" }}> Your Project Pages</div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr>
+              <th style={{ ...thE, textAlign: "left", width: "40%" }}>Page Name</th>
+              <th style={{ ...thE, width: "25%" }}>Complexity</th>
+              <th style={{ ...thE, width: "15%" }}>Hours</th>
+              <th style={{ ...thE, width: "15%" }}>Cost (₹)</th>
+              <th style={{ ...thE, width: "5%" }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageBreakdown.map((pg, i) => (
+              <tr key={i}>
+                <td style={tdE}>
+                  <input
+                    style={{ ...inpE, padding: "4px 8px" }}
+                    value={pg.name}
+                    onChange={e => updateEstPage(i, "name", e.target.value)}
+                    placeholder="e.g. Home Page"
+                  />
+                </td>
+                <td style={{ ...tdE, textAlign: "center" }}>
+                  <select
+                    value={pg.complexity}
+                    onChange={e => updateEstPage(i, "complexity", e.target.value)}
+                    style={{ ...inpE, padding: "4px 8px", color: complexityColor[pg.complexity], fontWeight: "bold" }}
+                  >
+                    <option value="simple">Simple</option>
+                    <option value="medium">Medium</option>
+                    <option value="complex">Complex</option>
+                  </select>
+                </td>
+                <td style={{ ...tdE, textAlign: "center", fontWeight: "bold", color: complexityColor[pg.complexity] }}>{pg.hours}h</td>
+                <td style={{ ...tdE, textAlign: "right", fontWeight: "bold", color: "#1a2744" }}>₹{pg.cost.toLocaleString("en-IN")}</td>
+                <td style={{ ...tdE, textAlign: "center" }}>
+                  {pages.length > 1 && (
+                    <button onClick={() => removeEstPage(i)} style={{ background: "#fee", border: "1px solid #fcc", color: "#c00", borderRadius: 4, padding: "2px 6px", cursor: "pointer" }}>✕</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button onClick={addEstPage} style={{ marginTop: 10, background: "transparent", border: "1px dashed #c9a84c", color: "#c9a84c", borderRadius: 4, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}>+ Add Page</button>
+      </div>
+
+      {/* Summary */}
+      <div style={{ background: "#1a2744", borderRadius: 10, padding: 24, color: "white" }}>
+        <div style={{ fontFamily: "Arial, sans-serif", fontWeight: "bold", fontSize: 15, color: "#c9a84c", marginBottom: 16, letterSpacing: 1 }}>COST SUMMARY</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+          {[
+            ["Pages", pages.length, ""],
+            ["Base Hours", subtotalHours + "h", ""],
+            ["Base Cost", "₹" + subtotalCost.toLocaleString("en-IN"), ""],
+            ["Buffer (" + bufferPct + "%)", "+" + bufferHours + "h", ""],
+            ["Buffer Cost", "₹" + bufferCost.toLocaleString("en-IN"), ""],
+            ["", "", ""],
+          ].map(([label, val], i) => label ? (
+            <div key={i} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11, color: "#aaa", marginBottom: 4 }}>{label}</div>
+              <div style={{ fontWeight: "bold", fontSize: 16, color: "white" }}>{val}</div>
+            </div>
+          ) : <div key={i} />)}
+        </div>
+        <div style={{ borderTop: "2px solid #c9a84c", paddingTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#aaa" }}>TOTAL ESTIMATED COST</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", fontFamily: "Arial, sans-serif" }}>₹{totalCost.toLocaleString("en-IN")}</div>
+              <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>{toWords(totalCost)} Rupees Only</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 12, color: "#aaa" }}>TOTAL HOURS</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "white", fontFamily: "Arial, sans-serif" }}>{totalHours}h</div>
+              <div style={{ fontSize: 12, color: "#aaa" }}>≈ {Math.ceil(totalHours / 8)} working days</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 16, background: "rgba(201,168,76,0.15)", borderRadius: 6, padding: 10, fontSize: 12, color: "#c9a84c" }}>
+          💡 Suggested quote range: <strong>₹{Math.round(totalCost * 0.9).toLocaleString("en-IN")}</strong> – <strong>₹{Math.round(totalCost * 1.15).toLocaleString("en-IN")}</strong> &nbsp;(±10–15% negotiation margin)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const inpE = { width: "100%", border: "1px solid #ddd", borderRadius: 4, fontSize: 13, fontFamily: "Arial, sans-serif", boxSizing: "border-box", outline: "none", padding: "6px 10px" };
+const thE = { padding: "8px 10px", background: "#1a2744", color: "#c9a84c", fontFamily: "Arial, sans-serif", fontSize: 12, fontWeight: "bold" };
+const tdE = { padding: "7px 10px", background: "#f7f5f0", borderBottom: "1px solid #e8e4db", fontFamily: "Arial, sans-serif" };
+
 // ─── PREVIEW ─────────────────────────────────────────────────────────────────
 
 function QuotePreview({ quote, projectLabel, totalPrice }) {
@@ -661,7 +889,7 @@ function QuotePreview({ quote, projectLabel, totalPrice }) {
             <div style={{ marginTop: 40, padding: "24px 0", borderTop: "2px solid #1a2744", textAlign: "center" }}>
               <p style={{ fontSize: 14, color: "#444", marginBottom: 16, fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>
                 Thank you for the opportunity to serve <strong>{quote.clientName || "[Client Name]"}</strong>.<br />
-                We look forward to building a world class digital platform for you.
+                We look forward to building a world class digital platform for your financial services and business.
               </p>
               <div style={{ fontFamily: "Arial, sans-serif", fontWeight: "bold", color: "#1a2744", fontSize: 15, marginBottom: 4 }}>{quote.preparedBy}</div>
               <div style={{ fontSize: 12, color: "#888", fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>www.tresvance.com | info@tresvance.com | +91 8129108139</div>
