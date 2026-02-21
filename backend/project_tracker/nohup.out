@@ -1,0 +1,235 @@
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 1 issue (0 silenced).
+[20/Feb/2026 18:48:13] "GET /admin/ HTTP/1.0" 302 0
+[20/Feb/2026 18:48:13] "GET /admin/login/?next=/admin/ HTTP/1.0" 200 4173
+Forbidden (Origin checking failed - https://track.tresvance.com does not match any trusted origins.): /admin/login/
+[20/Feb/2026 18:48:20] "POST /admin/login/?next=/admin/ HTTP/1.0" 403 2560
+Forbidden (Origin checking failed - https://track.tresvance.com does not match any trusted origins.): /admin/login/
+[20/Feb/2026 18:48:29] "POST /admin/login/?next=/admin/ HTTP/1.0" 403 2560
+/var/www/project-tracker-tres/backend/project_tracker/project_tracker/settings.py changed, reloading.
+Performing system checks...
+
+February 20, 2026 - 18:48:06
+Django version 5.2.10, using settings 'project_tracker.settings'
+Starting development server at http://0.0.0.0:9889/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 1 issue (0 silenced).
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 1 issue (0 silenced).
+[20/Feb/2026 18:50:14] "POST /admin/login/?next=/admin/ HTTP/1.0" 200 4341
+[20/Feb/2026 18:50:19] "POST /admin/login/?next=/admin/ HTTP/1.0" 302 0
+[20/Feb/2026 18:50:20] "GET /admin/ HTTP/1.0" 200 8925
+[20/Feb/2026 18:50:24] "GET /admin/home/project/ HTTP/1.0" 200 12036
+[20/Feb/2026 18:50:24] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[20/Feb/2026 18:50:33] "POST /admin/home/project/ HTTP/1.0" 200 8344
+[20/Feb/2026 18:50:35] "POST /admin/home/project/ HTTP/1.0" 302 0
+[20/Feb/2026 18:50:35] "GET /admin/home/project/ HTTP/1.0" 200 11690
+[20/Feb/2026 18:50:35] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[20/Feb/2026 18:50:51] "GET /api/home/ HTTP/1.0" 200 347
+[20/Feb/2026 18:51:31] "GET /api/home/ HTTP/1.0" 200 347
+[20/Feb/2026 19:46:01] "GET /api/home/ HTTP/1.0" 200 347
+[21/Feb/2026 04:31:01] "GET /api/home/ HTTP/1.0" 200 347
+/var/www/project-tracker-tres/backend/project_tracker/project_tracker/settings.py changed, reloading.
+Performing system checks...
+
+February 20, 2026 - 18:50:11
+Django version 5.2.10, using settings 'project_tracker.settings'
+Starting development server at http://0.0.0.0:9889/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 1 issue (0 silenced).
+/var/www/project-tracker-tres/backend/project_tracker/home/urls.py changed, reloading.
+Performing system checks...
+
+February 21, 2026 - 05:30:47
+Django version 5.2.10, using settings 'project_tracker.settings'
+Starting development server at http://0.0.0.0:9889/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.Timesheet: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.TimesheetTask: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 3 issues (0 silenced).
+/var/www/project-tracker-tres/backend/project_tracker/project_tracker/settings.py changed, reloading.
+Performing system checks...
+
+
+You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): home.
+Run 'python manage.py migrate' to apply them.
+February 21, 2026 - 05:30:53
+Django version 5.2.10, using settings 'project_tracker.settings'
+Starting development server at http://0.0.0.0:9889/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.Timesheet: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.TimesheetTask: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 3 issues (0 silenced).
+Performing system checks...
+
+
+You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): home.
+Run 'python manage.py migrate' to apply them.
+February 21, 2026 - 05:31:00
+Django version 5.2.10, using settings 'project_tracker.settings'
+Starting development server at http://0.0.0.0:9889/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.Timesheet: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.TimesheetTask: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 3 issues (0 silenced).
+Watching for file changes with StatReloader
+System check identified some issues:
+
+WARNINGS:
+home.Project: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.Timesheet: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+home.TimesheetTask: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
+	HINT: Configure the DEFAULT_AUTO_FIELD setting or the HomeConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.
+
+System check identified 3 issues (0 silenced).
+Error: That port is already in use.
+[21/Feb/2026 05:32:37] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:32:41] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:32:47] "GET /admin/ HTTP/1.0" 200 9840
+[21/Feb/2026 05:32:49] "GET /admin/home/timesheet/ HTTP/1.0" 200 10599
+[21/Feb/2026 05:32:49] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:32:51] "GET /admin/home/project/ HTTP/1.0" 200 15634
+[21/Feb/2026 05:32:51] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:33:01] "POST /admin/logout/ HTTP/1.0" 200 3568
+[21/Feb/2026 05:33:05] "GET /admin/ HTTP/1.0" 302 0
+[21/Feb/2026 05:33:05] "GET /admin/login/?next=/admin/ HTTP/1.0" 200 4173
+[21/Feb/2026 05:33:06] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:30] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:32] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:32] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:32] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:32] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:56] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:56] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:57] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:35:57] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:36:39] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:36:39] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:36:39] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:36:41] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:36:42] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:16] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:50] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:53] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:39:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:40:51] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:40:51] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:52] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:42:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:45:11] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:45:11] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:45:12] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:45:12] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:36] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:37] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:37] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:37] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:54] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:55] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:46:58] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:47:00] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:47:02] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:47:03] "GET /api/home/ HTTP/1.0" 200 416
+[21/Feb/2026 05:47:34] "POST /api/timesheets/ HTTP/1.0" 201 348
+[21/Feb/2026 05:47:41] "GET /admin/ HTTP/1.0" 302 0
+[21/Feb/2026 05:47:41] "GET /admin/login/?next=/admin/ HTTP/1.0" 200 4173
+[21/Feb/2026 05:47:50] "POST /admin/login/?next=/admin/ HTTP/1.0" 302 0
+[21/Feb/2026 05:47:50] "GET /admin/ HTTP/1.0" 200 9840
+[21/Feb/2026 05:47:54] "GET /admin/home/timesheet/ HTTP/1.0" 200 14011
+[21/Feb/2026 05:47:55] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:47:56] "GET /admin/home/project/ HTTP/1.0" 200 15639
+[21/Feb/2026 05:47:56] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:48:00] "GET /admin/home/project/4/report/monthly/ HTTP/1.0" 200 7961
+[21/Feb/2026 05:48:16] "GET /admin/auth/user/ HTTP/1.0" 200 12606
+[21/Feb/2026 05:48:16] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:48:20] "GET /admin/auth/user/1/change/ HTTP/1.0" 200 23616
+[21/Feb/2026 05:48:20] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
+[21/Feb/2026 05:48:22] "GET /admin/auth/user/1/password/ HTTP/1.0" 200 10174
+[21/Feb/2026 05:48:22] "GET /admin/auth/user/ HTTP/1.0" 302 0
+[21/Feb/2026 05:48:23] "GET /admin/login/?next=/admin/auth/user/ HTTP/1.0" 200 4193
+[21/Feb/2026 05:48:33] "POST /admin/auth/user/1/password/ HTTP/1.0" 302 0
+[21/Feb/2026 05:48:33] "GET /admin/auth/user/1/change/ HTTP/1.0" 200 23752
+[21/Feb/2026 05:48:34] "GET /admin/jsi18n/ HTTP/1.0" 200 3342
