@@ -661,7 +661,7 @@ function QuotePreview({ quote, projectLabel, totalPrice }) {
             <div style={{ marginTop: 40, padding: "24px 0", borderTop: "2px solid #1a2744", textAlign: "center" }}>
               <p style={{ fontSize: 14, color: "#444", marginBottom: 16, fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>
                 Thank you for the opportunity to serve <strong>{quote.clientName || "[Client Name]"}</strong>.<br />
-                We look forward to building a world class digital platform for your financial services and business.
+                We look forward to building a world class digital platform for you.
               </p>
               <div style={{ fontFamily: "Arial, sans-serif", fontWeight: "bold", color: "#1a2744", fontSize: 15, marginBottom: 4 }}>{quote.preparedBy}</div>
               <div style={{ fontSize: 12, color: "#888", fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>www.tresvance.com | info@tresvance.com | +91 8129108139</div>
