@@ -95,7 +95,7 @@ function ProjectsPage() {
       ) : (
         <div style={{ background: "#fff", border: "1px solid #e2eaf0", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
           {/* Table header */}
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 2fr 80px 2fr", background: "#111", padding: "0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 70px 2.5fr 70px 1.5fr", background: "#111", padding: "0" }}>
             {["Project Name", "Mode", "URL", "Version", "Remarks"].map((h) => (
               <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: "#888" }}>{h}</div>
             ))}
@@ -104,12 +104,11 @@ function ProjectsPage() {
           {filtered.map((project, i) => {
             const mc = modeColor[project.mode] || { bg: "#f3f4f6", text: "#374151" };
             // Clean URL display
-            let displayUrl = project.url || "";
-            try { displayUrl = new URL(project.url).hostname.replace("www.", ""); } catch {}
+
 
             return (
               <div key={project.id || i}
-                style={{ display: "grid", gridTemplateColumns: "2fr 80px 2fr 80px 2fr", borderBottom: "1px solid #f0f4f7", background: i % 2 === 0 ? "#fff" : "#fafcfd", transition: "background .15s" }}
+                style={{ display: "grid", gridTemplateColumns: "1.2fr 70px 2.5fr 70px 1.5fr", borderBottom: "1px solid #f0f4f7", background: i % 2 === 0 ? "#fff" : "#fafcfd", transition: "background .15s" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#f0f7fc"}
                 onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#fafcfd"}>
 
@@ -127,14 +126,15 @@ function ProjectsPage() {
                 </div>
 
                 {/* URL — properly displayed */}
-                <div style={{ padding: "14px 18px", display: "flex", alignItems: "center" }}>
+                <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", overflow: "hidden" }}>
                   {project.url ? (
                     <a href={project.url} target="_blank" rel="noopener noreferrer"
-                      style={{ color: "#29ABE2", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", gap: 5, maxWidth: "100%" }}
+                      title={project.url}
+                      style={{ color: "#29ABE2", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", gap: 5, minWidth: 0, width: "100%" }}
                       onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
                       onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
-                      <span style={{ fontSize: 11 }}>🔗</span>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayUrl}</span>
+                      <span style={{ fontSize: 11, flexShrink: 0 }}>🔗</span>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{project.url}</span>
                     </a>
                   ) : <span style={{ color: "#ccc", fontSize: 13 }}>—</span>}
                 </div>
@@ -145,8 +145,10 @@ function ProjectsPage() {
                 </div>
 
                 {/* Remarks */}
-                <div style={{ padding: "14px 18px", display: "flex", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{project.remarks || <span style={{ color: "#ddd" }}>—</span>}</span>
+                <div style={{ padding: "14px 18px", display: "flex", alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 13, color: "#666", lineHeight: 1.5, wordBreak: "break-word" }}>
+                    {project.remarks || <span style={{ color: "#ddd" }}>—</span>}
+                  </span>
                 </div>
               </div>
             );

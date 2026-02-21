@@ -5,9 +5,7 @@ from .models import Project, Timesheet, TimesheetTask
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['id', 'name', 'mode', 'version', 'hourly_rate']
-
-
+        fields = ['id', 'name', 'mode', 'version', 'url', 'remarks', 'hourly_rate']
 class TimesheetTaskInputSerializer(serializers.Serializer):
     description = serializers.CharField()
     hours = serializers.DecimalField(max_digits=5, decimal_places=2)
