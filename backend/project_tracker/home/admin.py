@@ -3,7 +3,9 @@ from django.utils.html import format_html
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.urls import path
+from django.conf import settings
 from datetime import date as dt, timedelta
+import paramiko
 from .models import Project, Timesheet, TimesheetTask
 
 
@@ -19,6 +21,10 @@ class ProjectAdmin(admin.ModelAdmin):
             'fields': ('hourly_rate',),
             'description': '⚙️ Set the hourly rate (₹) for this project. Employees will NOT see this rate.'
         }),
+        ('Deployment', {
+            'fields': ('deploy_command',),
+            'description': '🚀 Shell command run on the VPS via SSH when you click Deploy. Leave blank to hide the button.'
+        }),
     )
 
     def get_urls(self):
@@ -27,6 +33,7 @@ class ProjectAdmin(admin.ModelAdmin):
             path('<int:project_id>/report/weekly/', self.admin_site.admin_view(self.weekly_report), name='project_weekly_report'),
             path('<int:project_id>/report/monthly/', self.admin_site.admin_view(self.monthly_report), name='project_monthly_report'),
             path('<int:project_id>/report/all/', self.admin_site.admin_view(self.all_report), name='project_all_report'),
+            path('<int:project_id>/deploy/', self.admin_site.admin_view(self.deploy_project), name='project_deploy'),
         ]
         return custom + urls
 
@@ -50,16 +57,94 @@ class ProjectAdmin(admin.ModelAdmin):
     total_billed.short_description = 'Total Billed'
 
     def report_buttons(self, obj):
+        deploy_btn = ''
+        if obj.deploy_command:
+            deploy_btn = format_html(
+                '<a href="{}/deploy/" target="_blank" '
+                'onclick="return confirm(\'Deploy {}? This will run the deploy script on the VPS.\');" '
+                'style="background:#e2542f;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">🚀 Deploy</a>',
+                obj.pk, obj.name
+            )
         return format_html(
             '<div style="display:flex;gap:6px;">'
             '<a href="{}/report/weekly/" target="_blank" style="background:#29ABE2;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📅 Weekly</a>'
             '<a href="{}/report/monthly/" target="_blank" style="background:#1a6b3a;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📆 Monthly</a>'
             '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📋 All</a>'
+            '{}'
             '</div>',
-            obj.pk, obj.pk, obj.pk
+            obj.pk, obj.pk, obj.pk, deploy_btn
         )
     report_buttons.short_description = 'Reports'
 
+    # ── Deploy ───────────────────────────────────────────────────────────────
+    def deploy_project(self, request, project_id):
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found.", status=404)
+
+        if not project.deploy_command:
+            return HttpResponse("No deploy command configured for this project.", status=400)
+
+        output, error, exit_status, ok = "", "", None, False
+        try:
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(
+                hostname=settings.DEPLOY_SSH_HOST,
+                username=settings.DEPLOY_SSH_USER,
+                key_filename=settings.DEPLOY_SSH_KEY_PATH,
+                timeout=15,
+            )
+            stdin, stdout, stderr = client.exec_command(project.deploy_command, timeout=600)
+            output = stdout.read().decode(errors='replace')
+            error = stderr.read().decode(errors='replace')
+            exit_status = stdout.channel.recv_exit_status()
+            ok = (exit_status == 0)
+            client.close()
+        except Exception as e:
+            error = str(e)
+            ok = False
+
+        return HttpResponse(self._build_deploy_result(project, output, error, exit_status, ok))
+
+    def _build_deploy_result(self, project, output, error, exit_status, ok):
+        generated = dt.today().strftime("%d %B %Y, %I:%M %p")
+        status_color = "#1a6b3a" if ok else "#c0392b"
+        status_text = "✅ Deploy Succeeded" if ok else "❌ Deploy Failed"
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Deploy – {project.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'DM Sans',sans-serif;background:#f7f9fb;color:#111}}
+.bar{{background:#111;padding:16px 40px;display:flex;justify-content:space-between;align-items:center}}
+.bar h1{{color:#fff;font-size:15px}}
+.status{{margin:24px 40px;padding:16px 22px;border-radius:6px;background:{status_color};color:#fff;font-weight:700;font-size:15px;display:flex;justify-content:space-between}}
+.meta{{margin:0 40px 20px;font-size:12px;color:#888}}
+.log-box{{margin:0 40px 40px;background:#0d1117;border-radius:6px;overflow:hidden}}
+.log-head{{background:#161b22;padding:8px 16px;font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;font-weight:700}}
+pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre-wrap;word-break:break-word;line-height:1.6}}
+.err pre{{color:#ff7b72}}
+</style>
+</head>
+<body>
+<div class="bar"><h1>🚀 Deploy Report — {project.name}</h1></div>
+<div class="status"><span>{status_text}</span><span>Exit code: {exit_status if exit_status is not None else "N/A"}</span></div>
+<div class="meta">Command: <code>{project.deploy_command}</code> &nbsp;·&nbsp; Run: {generated}</div>
+<div class="log-box">
+  <div class="log-head">stdout</div>
+  <pre>{output or '(no output)'}</pre>
+</div>
+<div class="log-box err">
+  <div class="log-head">stderr</div>
+  <pre>{error or '(no errors)'}</pre>
+</div>
+</body></html>"""
     def weekly_report(self, request, project_id):
         try:
             project = Project.objects.get(pk=project_id)

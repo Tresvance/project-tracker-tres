@@ -126,3 +126,10 @@ STATIC_URL = 'static/'
 
 # Add this line
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # this is the folder where collectstatic will store files
+
+
+import os
+
+DEPLOY_SSH_HOST = os.environ.get("DEPLOY_SSH_HOST", "194.164.148.205")  # or its IP
+DEPLOY_SSH_USER = os.environ.get("DEPLOY_SSH_USER", "root")
+DEPLOY_SSH_KEY_PATH = os.environ.get("DEPLOY_SSH_KEY_PATH", "/root/.ssh/id_rsa")
