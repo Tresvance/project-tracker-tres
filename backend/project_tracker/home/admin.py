@@ -43,7 +43,7 @@ class ProjectAdminForm(forms.ModelForm):
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectAdminForm
     inlines = [DeployScriptInline]
-    list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'report_buttons')
+    list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
     list_filter = ('mode',)
     search_fields = ('name', 'remarks')
     fieldsets = (
@@ -88,23 +88,49 @@ class ProjectAdmin(admin.ModelAdmin):
         return format_html('<strong style="color:#1a6b3a;">₹{}</strong>', amount)
     total_billed.short_description = 'Total Billed'
 
+    def active_script_display(self, obj):
+        if obj.active_deploy_script:
+            return format_html(
+                '<span style="background:#1c2530;color:#29ABE2;padding:4px 10px;border-radius:4px;'
+                'font-size:11px;font-weight:700;white-space:nowrap;">📜 {}</span>',
+                obj.active_deploy_script.label
+            )
+        return format_html(
+            '<span style="background:#2a2a2a;color:#888;padding:4px 10px;border-radius:4px;'
+            'font-size:11px;white-space:nowrap;">— none selected —</span>'
+        )
+    active_script_display.short_description = 'Active Script'
+
     def report_buttons(self, obj):
         deploy_btn = ''
+        script_badge = ''
         if obj.active_deploy_script:
+            script_badge = format_html(
+                '<span title="{}" style="background:#1c2530;color:#8bc9ea;padding:4px 10px;border-radius:4px;'
+                'font-size:11px;font-weight:600;white-space:nowrap;max-width:140px;overflow:hidden;'
+                'text-overflow:ellipsis;display:inline-block;">📌 {}</span>',
+                obj.active_deploy_script.command, obj.active_deploy_script.label
+            )
             deploy_btn = format_html(
                 '<a href="{}/deploy/" target="_blank" '
                 'onclick="return confirm(\'Deploy {}? This will run \\\'{}\\\' on the VPS.\');" '
-                'style="background:#e2542f;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">🚀 Deploy</a>',
+                'style="background:#e2542f;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">🚀 Deploy Live Server</a>',
                 obj.pk, obj.name, obj.active_deploy_script.label
             )
+        else:
+            script_badge = format_html(
+                '<span style="background:#2a1c1c;color:#e08080;padding:4px 10px;border-radius:4px;'
+                'font-size:11px;font-weight:600;white-space:nowrap;">⚠️ No script selected</span>'
+            )
         return format_html(
-            '<div style="display:flex;gap:6px;">'
+            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
             '<a href="{}/report/weekly/" target="_blank" style="background:#29ABE2;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📅 Weekly</a>'
             '<a href="{}/report/monthly/" target="_blank" style="background:#1a6b3a;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📆 Monthly</a>'
             '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📋 All</a>'
             '{}'
+            '{}'
             '</div>',
-            obj.pk, obj.pk, obj.pk, deploy_btn
+            obj.pk, obj.pk, obj.pk, script_badge, deploy_btn
         )
     report_buttons.short_description = 'Reports'
 
