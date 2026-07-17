@@ -10,6 +10,96 @@ import paramiko
 from .models import Project, Timesheet, TimesheetTask, DeployScript
 
 
+
+
+import threading
+from django.core.cache import cache
+
+# ── Deploy ───────────────────────────────────────────────────────────────
+def deploy_project(self, request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return HttpResponse("Project not found.", status=404)
+
+    script = project.active_deploy_script
+    if not script:
+        return HttpResponse("No deploy script selected for this project.", status=400)
+
+    cache_key = f"deploy_status_{project_id}"
+    cache.set(cache_key, {"status": "running"}, timeout=900)  # 15 min safety expiry
+
+    def run_deploy():
+        output, error, exit_status, ok = "", "", None, False
+        try:
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(
+                hostname=settings.DEPLOY_SSH_HOST,
+                username=settings.DEPLOY_SSH_USER,
+                key_filename=settings.DEPLOY_SSH_KEY_PATH,
+                timeout=15,
+            )
+            stdin, stdout, stderr = client.exec_command(script.command, timeout=600)
+            output = stdout.read().decode(errors='replace')
+            error = stderr.read().decode(errors='replace')
+            exit_status = stdout.channel.recv_exit_status()
+            ok = (exit_status == 0)
+            client.close()
+        except Exception as e:
+            error = str(e)
+            ok = False
+
+        cache.set(cache_key, {
+            "status": "done",
+            "ok": ok,
+            "output": output,
+            "error": error,
+            "exit_status": exit_status,
+            "command": script.command,
+        }, timeout=900)
+
+    threading.Thread(target=run_deploy, daemon=True).start()
+
+    return HttpResponse(self._build_deploy_waiting(project))
+
+def deploy_status(self, request, project_id):
+    cache_key = f"deploy_status_{project_id}"
+    state = cache.get(cache_key)
+    project = Project.objects.get(pk=project_id)
+
+    if not state or state.get("status") == "running":
+        return HttpResponse('<script>setTimeout(()=>location.reload(), 2000)</script>Still running...')
+
+    return HttpResponse(self._build_deploy_result(
+        project, state["command"], state["output"], state["error"],
+        state["exit_status"], state["ok"]
+    ))
+
+def _build_deploy_waiting(self, project):
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="2;url=/admin/home/project/{project.pk}/deploy/status/">
+<title>Deploying – {project.name}</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;height:100vh}}
+.box{{text-align:center}}
+.spinner{{width:36px;height:36px;border:4px solid #29ABE2;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}}
+@keyframes spin{{to{{transform:rotate(360deg)}}}}
+h1{{font-size:16px;font-weight:600}}
+p{{font-size:12px;color:#888;margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="spinner"></div>
+<h1>🚀 Deploying {project.name}...</h1>
+<p>This page will update automatically. Please don't close this tab.</p>
+</div>
+</body></html>"""
 # ── Deploy Script Inline (the "+ Add another" table) ───────────────────────────
 class DeployScriptInline(admin.TabularInline):
     model = DeployScript
