@@ -120,7 +120,7 @@ class ProjectAdmin(admin.ModelAdmin):
             return HttpResponse("No deploy script selected for this project.", status=400)
 
         cache_key = f"deploy_status_{project_id}"
-        cache.set(cache_key, {"status": "running"}, timeout=900)  # 15 min safety expiry
+        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)  # 15 min safety expiry
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
@@ -162,7 +162,7 @@ class ProjectAdmin(admin.ModelAdmin):
         project = Project.objects.get(pk=project_id)
 
         if not state or state.get("status") == "running":
-            return HttpResponse('<script>setTimeout(()=>location.reload(), 2000)</script>Still running...')
+            return HttpResponse(self._build_deploy_waiting(project))
 
         return HttpResponse(self._build_deploy_result(
             project, state["command"], state["output"], state["error"],
@@ -176,22 +176,40 @@ class ProjectAdmin(admin.ModelAdmin):
 <meta charset="utf-8">
 <meta http-equiv="refresh" content="2;url=/admin/home/project/{project.pk}/deploy/status/">
 <title>Deploying – {project.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;height:100vh}}
+body{{font-family:'DM Sans',sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;height:100vh}}
 .box{{text-align:center}}
-.spinner{{width:36px;height:36px;border:4px solid #29ABE2;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}}
+.ring{{
+  width:90px;height:90px;border-radius:50%;margin:0 auto 24px;position:relative;
+  background:conic-gradient(#29ABE2 0deg, #29ABE2 270deg, #1c2530 270deg, #1c2530 360deg);
+  animation:spin 1.1s linear infinite;
+}}
+.ring::before{{
+  content:"";position:absolute;top:8px;left:8px;right:8px;bottom:8px;
+  background:#0d1117;border-radius:50%;
+}}
 @keyframes spin{{to{{transform:rotate(360deg)}}}}
-h1{{font-size:16px;font-weight:600}}
-p{{font-size:12px;color:#888;margin-top:8px}}
+h1{{font-size:16px;font-weight:600;margin-bottom:6px}}
+p{{font-size:12px;color:#888;margin-top:4px}}
+.timer{{font-size:13px;color:#29ABE2;font-weight:700;margin-top:14px;font-family:'JetBrains Mono',monospace}}
 </style>
 </head>
 <body>
 <div class="box">
-<div class="spinner"></div>
+<div class="ring"></div>
 <h1>🚀 Deploying {project.name}...</h1>
-<p>This page will update automatically. Please don't close this tab.</p>
+<p>Please don't close this tab — this page updates automatically.</p>
+<div class="timer" id="timer">Elapsed: 0s</div>
 </div>
+<script>
+let seconds = 0;
+setInterval(() => {{
+  seconds++;
+  document.getElementById('timer').textContent = 'Elapsed: ' + seconds + 's';
+}}, 1000);
+</script>
 </body></html>"""
 
     def _build_deploy_result(self, project, command, output, error, exit_status, ok):
