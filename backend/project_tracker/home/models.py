@@ -1,6 +1,27 @@
 from django.db import models
 
 
+
+class DeployScript(models.Model):
+    project = models.ForeignKey(
+        "Project", on_delete=models.CASCADE, related_name="deploy_scripts"
+    )
+    label = models.CharField(
+        max_length=100,
+        help_text='Short name, e.g. "Full deploy (web+admin)" or "Frontend only"',
+    )
+    command = models.CharField(
+        max_length=500,
+        help_text='Shell command to run, e.g. "bash /opt/Qpet/deploy_simple.sh"',
+    )
+
+    def __str__(self):
+        return self.label
+
+    class Meta:
+        ordering = ["id"]
+
+
 class Project(models.Model):
     MODE_CHOICES = [("DEV", "Development"), ("PROD", "Production"), ("MAINT", "Maintenance")]
 
@@ -17,6 +38,22 @@ class Project(models.Model):
         help_text='Shell command to run on the VPS to deploy this project. '
                    'e.g. "cd /opt/Qpet && ./deploy_qpet.sh". Leave blank to hide the Deploy button.',
     )
+
+
+    active_deploy_script = models.ForeignKey(
+        DeployScript,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="Pick which deploy script runs when the Deploy button is clicked.",
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["name"]
 
     # ── GitHub integration ──────────────────────────────────────────────────
     github_repo = models.CharField(
