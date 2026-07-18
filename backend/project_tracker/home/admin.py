@@ -12,7 +12,7 @@ from django.core.cache import cache
 from .models import Project, Timesheet, TimesheetTask, DeployScript
 
 
-# ── Deploy Script Inline (the "+ Add another" table) ───────────────────────────
+# ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
 class DeployScriptInline(admin.TabularInline):
     model = DeployScript
     extra = 1
@@ -53,9 +53,13 @@ class ProjectAdmin(admin.ModelAdmin):
             'fields': ('hourly_rate',),
             'description': '⚙️ Set the hourly rate (₹) for this project. Employees will NOT see this rate.'
         }),
-        ('Deployment', {
+        ('Live Deployment', {
             'fields': ('active_deploy_script',),
-            'description': '🚀 Add deploy scripts below (save first if this is a new project), then pick which one runs when you click Deploy. Go to the Deploy Center (button on project list) to actually run deploys.'
+            'description': '🚀 Add live deploy scripts below (save first if this is a new project), then pick which one runs. Go to the Deploy Center (button on project list) to actually run deploys.'
+        }),
+        ('Test Server Deployment', {
+            'fields': ('test_deploy_command',),
+            'description': '🧪 Single command for deploying to the TEST server. No multiple scripts — just one command.'
         }),
     )
 
@@ -67,6 +71,8 @@ class ProjectAdmin(admin.ModelAdmin):
             path('<int:project_id>/report/all/', self.admin_site.admin_view(self.all_report), name='project_all_report'),
             path('<int:project_id>/deploy/', self.admin_site.admin_view(self.deploy_project), name='project_deploy'),
             path('<int:project_id>/deploy/status/', self.admin_site.admin_view(self.deploy_status), name='project_deploy_status'),
+            path('<int:project_id>/deploy-test/', self.admin_site.admin_view(self.deploy_test_project), name='project_deploy_test'),
+            path('<int:project_id>/deploy-test/status/', self.admin_site.admin_view(self.deploy_test_status), name='project_deploy_test_status'),
             path('deploy-center/', self.admin_site.admin_view(self.deploy_center), name='project_deploy_center'),
         ]
         return custom + urls
@@ -116,29 +122,52 @@ class ProjectAdmin(admin.ModelAdmin):
 
     # ── Deploy Center (standalone dashboard page) ──────────────────────────────
     def deploy_center(self, request):
-        projects = Project.objects.filter(active_deploy_script__isnull=False).select_related('active_deploy_script')
+        projects = Project.objects.filter(
+            models.Q(active_deploy_script__isnull=False) | models.Q(test_deploy_command__gt='')
+        ).select_related('active_deploy_script').distinct() if False else Project.objects.select_related('active_deploy_script')
+
+        # keep only projects that have at least one of the two configured
+        projects = [p for p in projects if p.active_deploy_script or p.test_deploy_command]
 
         cards = ""
         for p in projects:
             script = p.active_deploy_script
+
+            live_block = ""
+            if script:
+                live_block = f"""
+                <div class="dc-script">
+                    <span class="dc-label">Live Script</span>
+                    <span class="dc-script-name">📜 {script.label}</span>
+                    <code class="dc-cmd">{script.command}</code>
+                </div>
+                <a href="/admin/home/project/{p.pk}/deploy/" target="_blank"
+                   onclick="return confirm('Deploy {p.name} to LIVE? This will run \\'{script.label}\\' on the VPS.');"
+                   class="dc-btn dc-btn-live">🚀 Deploy Live Server</a>"""
+
+            test_block = ""
+            if p.test_deploy_command:
+                test_block = f"""
+                <div class="dc-script">
+                    <span class="dc-label">Test Command</span>
+                    <code class="dc-cmd">{p.test_deploy_command}</code>
+                </div>
+                <a href="/admin/home/project/{p.pk}/deploy-test/" target="_blank"
+                   onclick="return confirm('Deploy {p.name} to TEST server?');"
+                   class="dc-btn dc-btn-test">🧪 Deploy Test Server</a>"""
+
             cards += f"""
             <div class="deploy-card">
                 <div class="dc-top">
                     <div class="dc-name">{p.name}</div>
                     <div class="dc-mode">{p.mode}</div>
                 </div>
-                <div class="dc-script">
-                    <span class="dc-label">Active Script</span>
-                    <span class="dc-script-name">📜 {script.label}</span>
-                    <code class="dc-cmd">{script.command}</code>
-                </div>
-                <a href="/admin/home/project/{p.pk}/deploy/" target="_blank"
-                   onclick="return confirm('Deploy {p.name}? This will run \\'{script.label}\\' on the VPS.');"
-                   class="dc-btn">🚀 Deploy Live Server</a>
+                {live_block}
+                {test_block}
             </div>"""
 
         if not cards:
-            cards = '<div class="dc-empty">No projects have an active deploy script yet.<br>Go to a project → Deployment section → add a script and select it as active.</div>'
+            cards = '<div class="dc-empty">No projects have a live script or test command yet.<br>Go to a project → Deployment sections → add one.</div>'
 
         return HttpResponse(f"""<!DOCTYPE html>
 <html>
@@ -156,7 +185,7 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
 .topbar a:hover{{text-decoration:underline}}
 .sub{{padding:18px 40px 0;font-size:13px;color:#7d8590}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;padding:24px 40px 50px}}
-.deploy-card{{background:#141a24;border:1px solid #232b38;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;transition:border-color .15s}}
+.deploy-card{{background:#141a24;border:1px solid #232b38;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:border-color .15s}}
 .deploy-card:hover{{border-color:#29ABE2}}
 .dc-top{{display:flex;justify-content:space-between;align-items:center}}
 .dc-name{{font-size:16px;font-weight:700;color:#fff}}
@@ -165,8 +194,11 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
 .dc-label{{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#5c6773;font-weight:700}}
 .dc-script-name{{font-size:13px;color:#8bc9ea;font-weight:700}}
 .dc-cmd{{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7d8590;word-break:break-all}}
-.dc-btn{{background:#e2542f;color:#fff;text-align:center;padding:11px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s}}
-.dc-btn:hover{{background:#c9421f}}
+.dc-btn{{text-align:center;padding:11px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s}}
+.dc-btn-live{{background:#e2542f;color:#fff}}
+.dc-btn-live:hover{{background:#c9421f}}
+.dc-btn-test{{background:#8a5cf6;color:#fff}}
+.dc-btn-test:hover{{background:#7444e0}}
 .dc-empty{{grid-column:1/-1;text-align:center;padding:60px 20px;color:#5c6773;font-size:14px;line-height:1.8}}
 </style>
 </head>
@@ -175,11 +207,11 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
   <h1>🚀 Deploy <span>Center</span></h1>
   <a href="/admin/home/project/">← Back to Projects</a>
 </div>
-<div class="sub">Showing {projects.count()} project(s) with an active deploy script configured.</div>
+<div class="sub">Showing {len(cards.strip()) and len(projects) or 0} project(s) with live and/or test deploy configured.</div>
 <div class="grid">{cards}</div>
 </body></html>""")
 
-    # ── Deploy ───────────────────────────────────────────────────────────────
+    # ── Live Deploy ──────────────────────────────────────────────────────────
     def deploy_project(self, request, project_id):
         try:
             project = Project.objects.get(pk=project_id)
@@ -191,7 +223,7 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
             return HttpResponse("No deploy script selected for this project.", status=400)
 
         cache_key = f"deploy_status_{project_id}"
-        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)  # 15 min safety expiry
+        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
@@ -215,17 +247,12 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
                 ok = False
 
             cache.set(cache_key, {
-                "status": "done",
-                "ok": ok,
-                "output": output,
-                "error": error,
-                "exit_status": exit_status,
-                "command": script.command,
+                "status": "done", "ok": ok, "output": output, "error": error,
+                "exit_status": exit_status, "command": script.command,
             }, timeout=900)
 
         threading.Thread(target=run_deploy, daemon=True).start()
-
-        return HttpResponse(self._build_deploy_waiting(project))
+        return HttpResponse(self._build_deploy_waiting(project, "Live Server"))
 
     def deploy_status(self, request, project_id):
         cache_key = f"deploy_status_{project_id}"
@@ -233,19 +260,76 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
         project = Project.objects.get(pk=project_id)
 
         if not state or state.get("status") == "running":
-            return HttpResponse(self._build_deploy_waiting(project))
+            return HttpResponse(self._build_deploy_waiting(project, "Live Server"))
 
         return HttpResponse(self._build_deploy_result(
             project, state["command"], state["output"], state["error"],
-            state["exit_status"], state["ok"]
+            state["exit_status"], state["ok"], "Live Server"
         ))
 
-    def _build_deploy_waiting(self, project):
+    # ── Test Deploy ──────────────────────────────────────────────────────────
+    def deploy_test_project(self, request, project_id):
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found.", status=404)
+
+        command = project.test_deploy_command
+        if not command:
+            return HttpResponse("No test deploy command set for this project.", status=400)
+
+        cache_key = f"deploy_test_status_{project_id}"
+        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)
+
+        def run_deploy():
+            output, error, exit_status, ok = "", "", None, False
+            try:
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    hostname=settings.DEPLOY_SSH_HOST,
+                    username=settings.DEPLOY_SSH_USER,
+                    key_filename=settings.DEPLOY_SSH_KEY_PATH,
+                    timeout=15,
+                )
+                stdin, stdout, stderr = client.exec_command(command, timeout=600)
+                output = stdout.read().decode(errors='replace')
+                error = stderr.read().decode(errors='replace')
+                exit_status = stdout.channel.recv_exit_status()
+                ok = (exit_status == 0)
+                client.close()
+            except Exception as e:
+                error = str(e)
+                ok = False
+
+            cache.set(cache_key, {
+                "status": "done", "ok": ok, "output": output, "error": error,
+                "exit_status": exit_status, "command": command,
+            }, timeout=900)
+
+        threading.Thread(target=run_deploy, daemon=True).start()
+        return HttpResponse(self._build_deploy_waiting(project, "Test Server"))
+
+    def deploy_test_status(self, request, project_id):
+        cache_key = f"deploy_test_status_{project_id}"
+        state = cache.get(cache_key)
+        project = Project.objects.get(pk=project_id)
+
+        if not state or state.get("status") == "running":
+            return HttpResponse(self._build_deploy_waiting(project, "Test Server"))
+
+        return HttpResponse(self._build_deploy_result(
+            project, state["command"], state["output"], state["error"],
+            state["exit_status"], state["ok"], "Test Server"
+        ))
+
+    def _build_deploy_waiting(self, project, target_label):
+        status_url = "deploy" if target_label == "Live Server" else "deploy-test"
         return f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="2;url=/admin/home/project/{project.pk}/deploy/status/">
+<meta http-equiv="refresh" content="2;url=/admin/home/project/{project.pk}/{status_url}/status/">
 <title>Deploying – {project.name}</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>
@@ -270,7 +354,7 @@ p{{font-size:12px;color:#888;margin-top:4px}}
 <body>
 <div class="box">
 <div class="ring"></div>
-<h1>🚀 Deploying {project.name}...</h1>
+<h1>🚀 Deploying {project.name} ({target_label})...</h1>
 <p>Please don't close this tab — this page updates automatically.</p>
 <div class="timer" id="timer">Elapsed: 0s</div>
 </div>
@@ -283,7 +367,7 @@ setInterval(() => {{
 </script>
 </body></html>"""
 
-    def _build_deploy_result(self, project, command, output, error, exit_status, ok):
+    def _build_deploy_result(self, project, command, output, error, exit_status, ok, target_label):
         generated = dt.today().strftime("%d %B %Y, %I:%M %p")
         status_color = "#1a6b3a" if ok else "#c0392b"
         status_text = "✅ Deploy Succeeded" if ok else "❌ Deploy Failed"
@@ -308,7 +392,7 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
 </style>
 </head>
 <body>
-<div class="bar"><h1>🚀 Deploy Report — {project.name}</h1></div>
+<div class="bar"><h1>🚀 Deploy Report — {project.name} ({target_label})</h1></div>
 <div class="status"><span>{status_text}</span><span>Exit code: {exit_status if exit_status is not None else "N/A"}</span></div>
 <div class="meta">Command: <code>{command}</code> &nbsp;·&nbsp; Run: {generated}</div>
 <div class="log-box">

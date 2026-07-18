@@ -32,6 +32,13 @@ class Project(models.Model):
     remarks     = models.TextField(blank=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    test_deploy_command = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text='Shell command to run on the VPS to deploy to the TEST server. '
+                   'e.g. "cd /opt/Qpet-test && ./deploy_qpet_test.sh". Leave blank to hide the Test Deploy button.',
+    )
+
     deploy_command = models.CharField(
         max_length=500,
         blank=True,
