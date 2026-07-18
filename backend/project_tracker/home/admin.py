@@ -43,6 +43,7 @@ class ProjectAdminForm(forms.ModelForm):
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectAdminForm
     inlines = [DeployScriptInline]
+    change_list_template = "admin/home/project/change_list.html"
     list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
     list_filter = ('mode',)
     search_fields = ('name', 'remarks')
@@ -54,7 +55,7 @@ class ProjectAdmin(admin.ModelAdmin):
         }),
         ('Deployment', {
             'fields': ('active_deploy_script',),
-            'description': '🚀 Add deploy scripts below (save first if this is a new project), then pick which one runs when you click Deploy.'
+            'description': '🚀 Add deploy scripts below (save first if this is a new project), then pick which one runs when you click Deploy. Go to the Deploy Center (button on project list) to actually run deploys.'
         }),
     )
 
@@ -66,6 +67,7 @@ class ProjectAdmin(admin.ModelAdmin):
             path('<int:project_id>/report/all/', self.admin_site.admin_view(self.all_report), name='project_all_report'),
             path('<int:project_id>/deploy/', self.admin_site.admin_view(self.deploy_project), name='project_deploy'),
             path('<int:project_id>/deploy/status/', self.admin_site.admin_view(self.deploy_status), name='project_deploy_status'),
+            path('deploy-center/', self.admin_site.admin_view(self.deploy_center), name='project_deploy_center'),
         ]
         return custom + urls
 
@@ -102,37 +104,80 @@ class ProjectAdmin(admin.ModelAdmin):
     active_script_display.short_description = 'Active Script'
 
     def report_buttons(self, obj):
-        deploy_btn = ''
-        script_badge = ''
-        if obj.active_deploy_script:
-            script_badge = format_html(
-                '<span title="{}" style="background:#1c2530;color:#8bc9ea;padding:4px 10px;border-radius:4px;'
-                'font-size:11px;font-weight:600;white-space:nowrap;max-width:140px;overflow:hidden;'
-                'text-overflow:ellipsis;display:inline-block;">📌 {}</span>',
-                obj.active_deploy_script.command, obj.active_deploy_script.label
-            )
-            deploy_btn = format_html(
-                '<a href="{}/deploy/" target="_blank" '
-                'onclick="return confirm(\'Deploy {}? This will run \\\'{}\\\' on the VPS.\');" '
-                'style="background:#e2542f;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">🚀 Deploy Live Server</a>',
-                obj.pk, obj.name, obj.active_deploy_script.label
-            )
-        else:
-            script_badge = format_html(
-                '<span style="background:#2a1c1c;color:#e08080;padding:4px 10px;border-radius:4px;'
-                'font-size:11px;font-weight:600;white-space:nowrap;">⚠️ No script selected</span>'
-            )
         return format_html(
             '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
             '<a href="{}/report/weekly/" target="_blank" style="background:#29ABE2;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📅 Weekly</a>'
             '<a href="{}/report/monthly/" target="_blank" style="background:#1a6b3a;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📆 Monthly</a>'
             '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📋 All</a>'
-            '{}'
-            '{}'
             '</div>',
-            obj.pk, obj.pk, obj.pk, script_badge, deploy_btn
+            obj.pk, obj.pk, obj.pk
         )
     report_buttons.short_description = 'Reports'
+
+    # ── Deploy Center (standalone dashboard page) ──────────────────────────────
+    def deploy_center(self, request):
+        projects = Project.objects.filter(active_deploy_script__isnull=False).select_related('active_deploy_script')
+
+        cards = ""
+        for p in projects:
+            script = p.active_deploy_script
+            cards += f"""
+            <div class="deploy-card">
+                <div class="dc-top">
+                    <div class="dc-name">{p.name}</div>
+                    <div class="dc-mode">{p.mode}</div>
+                </div>
+                <div class="dc-script">
+                    <span class="dc-label">Active Script</span>
+                    <span class="dc-script-name">📜 {script.label}</span>
+                    <code class="dc-cmd">{script.command}</code>
+                </div>
+                <a href="/admin/home/project/{p.pk}/deploy/" target="_blank"
+                   onclick="return confirm('Deploy {p.name}? This will run \\'{script.label}\\' on the VPS.');"
+                   class="dc-btn">🚀 Deploy Live Server</a>
+            </div>"""
+
+        if not cards:
+            cards = '<div class="dc-empty">No projects have an active deploy script yet.<br>Go to a project → Deployment section → add a script and select it as active.</div>'
+
+        return HttpResponse(f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Deploy Center</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-height:100vh}}
+.topbar{{background:#111722;padding:22px 40px;border-bottom:1px solid #1f2733;display:flex;justify-content:space-between;align-items:center}}
+.topbar h1{{font-size:19px;font-weight:800;letter-spacing:0.3px}}
+.topbar h1 span{{color:#29ABE2}}
+.topbar a{{color:#8bc9ea;font-size:12px;text-decoration:none;font-weight:600}}
+.topbar a:hover{{text-decoration:underline}}
+.sub{{padding:18px 40px 0;font-size:13px;color:#7d8590}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;padding:24px 40px 50px}}
+.deploy-card{{background:#141a24;border:1px solid #232b38;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;transition:border-color .15s}}
+.deploy-card:hover{{border-color:#29ABE2}}
+.dc-top{{display:flex;justify-content:space-between;align-items:center}}
+.dc-name{{font-size:16px;font-weight:700;color:#fff}}
+.dc-mode{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7d8590;background:#1c2530;padding:3px 8px;border-radius:4px}}
+.dc-script{{background:#0d1117;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}}
+.dc-label{{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#5c6773;font-weight:700}}
+.dc-script-name{{font-size:13px;color:#8bc9ea;font-weight:700}}
+.dc-cmd{{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7d8590;word-break:break-all}}
+.dc-btn{{background:#e2542f;color:#fff;text-align:center;padding:11px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s}}
+.dc-btn:hover{{background:#c9421f}}
+.dc-empty{{grid-column:1/-1;text-align:center;padding:60px 20px;color:#5c6773;font-size:14px;line-height:1.8}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>🚀 Deploy <span>Center</span></h1>
+  <a href="/admin/home/project/">← Back to Projects</a>
+</div>
+<div class="sub">Showing {projects.count()} project(s) with an active deploy script configured.</div>
+<div class="grid">{cards}</div>
+</body></html>""")
 
     # ── Deploy ───────────────────────────────────────────────────────────────
     def deploy_project(self, request, project_id):
@@ -316,7 +361,6 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
     def _build_report(self, project, timesheets, period_label, report_title):
         generated = dt.today().strftime("%d %B %Y")
 
-        # Build timesheet rows grouped by employee/date
         ts_rows = ""
         grand_hours = 0
         grand_amount = 0
