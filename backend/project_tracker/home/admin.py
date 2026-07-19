@@ -54,6 +54,10 @@ class ProjectAdmin(admin.ModelAdmin):
             'fields': ('hourly_rate',),
             'description': '⚙️ Set the hourly rate (₹) for this project. Employees will NOT see this rate.'
         }),
+        ('GitHub Integration', {
+            'fields': ('github_repo',),
+            'description': '🔗 GitHub repository path in "owner/repo" format, e.g. "myorg/myrepo".'
+        }),
         ('Live Deployment', {
             'fields': ('active_deploy_script',),
             'description': '🚀 Add live deploy scripts below (save first if this is a new project), then pick which one runs. Go to the Deploy Center (button on project list) to actually run deploys.'
