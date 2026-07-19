@@ -872,8 +872,8 @@ tr{{border-bottom:1px solid #f0f5f8}}
 <div class="sigs">
   {bank_html}
   <div style="width:180px;text-align:right">
-    <div style="height:65px;display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px">
-      <img src="/static/home/seal.png" alt="Seal" style="height:60px;width:60px;" />
+    <div style="height:85px;display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px">
+      <img src="/static/home/seal.png" alt="Seal" style="height:80px;width:80px;" />
     </div>
     <div class="sig-line" style="text-align:right">Prepared by</div>
     <div class="sig-name" style="text-align:right">Tresvance Softwares</div>
