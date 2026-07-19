@@ -714,13 +714,13 @@ p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
             task_count = len(emp_tasks)
             
             ts_rows += f"""
-            <tr style="background:#f7fbfd;border-top:2px solid #e0eff7">
+            <tr style="background:#f7fbfd;border-top:2px solid #e0eff7" class="emp-summary-row" data-emp-name="{employee_name}">
                 <td style="padding:10px 16px;font-size:12px;color:#aaa;font-weight:700">{str(sl).zfill(2)}</td>
                 <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#111">{employee_name}</td>
                 <td style="padding:10px 16px;font-size:13px;color:#555">All Dates</td>
-                <td style="padding:10px 16px;font-size:13px;color:#555;text-align:center">{task_count} tasks</td>
-                <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#29ABE2">{time_str}</td>
-                <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#111">&#8377;{amt_fmt}</td>
+                <td style="padding:10px 16px;font-size:13px;color:#555;text-align:center" class="emp-task-count" data-tasks="{task_count}">{task_count} tasks</td>
+                <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#29ABE2" class="emp-time" data-hours="{emp_total_hours}">{time_str}</td>
+                <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#111" class="emp-amount" data-amount="{emp_total_amount}">&#8377;{amt_fmt}</td>
             </tr>"""
             
             for task, commit_date in emp_tasks:
@@ -730,15 +730,16 @@ p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
                 t_time = f"{t_hrs}h {t_m}m" if t_m else f"{t_hrs}h"
                 task_amt = '{:,.2f}'.format(float(task.amount))
                 ts_rows += f"""
-            <tr style="background:#fff">
+            <tr style="background:#fff" class="commit-row" data-emp-name="{employee_name}">
                 <td style="padding:8px 16px;color:#ddd;font-size:11px"></td>
-                <td style="padding:8px 16px;padding-left:28px;font-size:13px;color:#555">
+                <td style="padding:8px 16px;padding-left:28px;font-size:13px;color:#555;position:relative;">
                     <span style="color:#29ABE2;margin-right:6px">›</span>{task.description}
+                    <button onclick="removeCommitRow(this)" class="remove-btn" title="Remove from PDF">[Remove]</button>
                 </td>
                 <td style="padding:8px 16px;font-size:13px;color:#555">{commit_date.strftime('%d %b %Y')}</td>
                 <td></td>
-                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">{t_time}</td>
-                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">&#8377;{task_amt}</td>
+                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888" class="task-time" data-hours="{task.hours}">{t_time}</td>
+                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888" class="task-amount" data-amount="{task.amount}">&#8377;{task_amt}</td>
             </tr>"""
             sl += 1
 
@@ -798,7 +799,9 @@ tr{{border-bottom:1px solid #f0f5f8}}
 .doc-footer{{margin:32px 40px 0;padding:14px 0;border-top:1px solid #e8f0f5;display:flex;justify-content:space-between}}
 .doc-footer span{{font-size:11px;color:#bbb}}
 .circuit{{position:absolute;top:0;right:200px;width:160px;height:110px;z-index:1;opacity:0.8}}
-@media print{{.printbar{{display:none!important}}}}
+.remove-btn{{float:right;background:none;border:none;color:#e11d48;cursor:pointer;font-size:11px;font-weight:600;padding:2px 6px;margin-left:10px;border-radius:4px;display:inline-block;transition:all 0.1s ease;}}
+.remove-btn:hover{{background:#fee2e2;color:#b91c1c;}}
+@media print{{.printbar, .remove-btn{{display:none!important}}}}
 </style>
 </head>
 <body>
@@ -836,7 +839,7 @@ tr{{border-bottom:1px solid #f0f5f8}}
   <div class="mc"><div class="ml">Project</div><div class="mv">{project.name}</div></div>
   <div class="mc"><div class="ml">Hourly Rate</div><div class="mv">&#8377;{project.hourly_rate}/hr</div></div>
   <div class="mc"><div class="ml">Total Entries</div><div class="mv">{timesheets.count()} timesheet(s)</div></div>
-  <div class="mc"><div class="ml">Total Amount</div><div class="mv" style="color:#1a6b3a;">&#8377;{grand_amt_fmt}</div></div>
+  <div class="mc"><div class="ml">Total Amount</div><div class="mv" id="meta-total-amount" style="color:#1a6b3a;">&#8377;{grand_amt_fmt}</div></div>
 </div>
 
 <div class="sec">
@@ -861,11 +864,11 @@ tr{{border-bottom:1px solid #f0f5f8}}
 <div class="total-bar">
   <div>
     <div class="tl">Total Time Spent</div>
-    <div class="tv">{total_time}</div>
+    <div class="tv" id="grand-total-time" data-hours="{grand_hours}">{total_time}</div>
   </div>
   <div style="text-align:right">
     <div class="tl">Total Amount Billable</div>
-    <div class="tv-amt">&#8377;{grand_amt_fmt}</div>
+    <div class="tv-amt" id="grand-total-amount" data-amount="{grand_amount}">&#8377;{grand_amt_fmt}</div>
   </div>
 </div>
 
@@ -884,6 +887,77 @@ tr{{border-bottom:1px solid #f0f5f8}}
   <span>tresvance.com &nbsp;·&nbsp; info@tresvance.com &nbsp;·&nbsp; +91 8129108139</span>
   <span>System-generated report &nbsp;·&nbsp; {generated}</span>
 </div>
+
+<script>
+function removeCommitRow(btn) {{
+    const row = btn.closest('tr');
+    const empName = row.getAttribute('data-emp-name');
+    
+    const taskHours = parseFloat(row.querySelector('.task-time').getAttribute('data-hours')) || 0;
+    const taskAmount = parseFloat(row.querySelector('.task-amount').getAttribute('data-amount')) || 0;
+    
+    // 1. Update Employee Summary Row
+    const summaryRow = document.querySelector(`.emp-summary-row[data-emp-name="${{empName}}"]`);
+    if (summaryRow) {{
+        const empTimeCell = summaryRow.querySelector('.emp-time');
+        const empAmtCell = summaryRow.querySelector('.emp-amount');
+        const empTaskCountCell = summaryRow.querySelector('.emp-task-count');
+        
+        let empHours = parseFloat(empTimeCell.getAttribute('data-hours')) || 0;
+        let empAmount = parseFloat(empAmtCell.getAttribute('data-amount')) || 0;
+        let empTasksCount = parseInt(empTaskCountCell.getAttribute('data-tasks')) || 0;
+        
+        empHours = Math.max(0, empHours - taskHours);
+        empAmount = Math.max(0, empAmount - taskAmount);
+        empTasksCount = Math.max(0, empTasksCount - 1);
+        
+        empTimeCell.setAttribute('data-hours', empHours.toFixed(2));
+        empAmtCell.setAttribute('data-amount', empAmount.toFixed(2));
+        empTaskCountCell.setAttribute('data-tasks', empTasksCount);
+        
+        const hrsInt = Math.floor(empHours);
+        const minsInt = Math.round((empHours - hrsInt) * 60);
+        const timeStr = minsInt ? `${{hrsInt}}h ${{minsInt}}m` : `${{hrsInt}}h`;
+        
+        empTimeCell.innerText = timeStr;
+        empAmtCell.innerHTML = `&#8377;${{empAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+        empTaskCountCell.innerText = `${{empTasksCount}} task${{empTasksCount !== 1 ? 's' : ''}}`;
+        
+        if (empTasksCount === 0) {{
+            summaryRow.remove();
+        }}
+    }}
+    
+    // 2. Update Grand Totals
+    const grandTimeCell = document.getElementById('grand-total-time');
+    const grandAmtCell = document.getElementById('grand-total-amount');
+    
+    let grandHours = parseFloat(grandTimeCell.getAttribute('data-hours')) || 0;
+    let grandAmount = parseFloat(grandAmtCell.getAttribute('data-amount')) || 0;
+    
+    grandHours = Math.max(0, grandHours - taskHours);
+    grandAmount = Math.max(0, grandAmount - taskAmount);
+    
+    grandTimeCell.setAttribute('data-hours', grandHours.toFixed(2));
+    grandAmtCell.setAttribute('data-amount', grandAmount.toFixed(2));
+    
+    const grandHrsInt = Math.floor(grandHours);
+    const grandMinsInt = Math.round((grandHours - grandHrsInt) * 60);
+    const grandTimeStr = grandMinsInt ? `${{grandHrsInt}}h ${{grandMinsInt}}m` : `${{grandHrsInt}}h`;
+    
+    grandTimeCell.innerText = grandTimeStr;
+    grandAmtCell.innerHTML = `&#8377;${{grandAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    
+    // 3. Update Meta Grid
+    const metaAmtCell = document.getElementById('meta-total-amount');
+    if (metaAmtCell) {{
+        metaAmtCell.innerHTML = `&#8377;${{grandAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    }}
+    
+    // 4. Remove row
+    row.remove();
+}}
+</script>
 
 </body></html>"""
 
