@@ -69,16 +69,16 @@ class Project(models.Model):
         help_text='GitHub repo in "owner/repo" format, e.g. myorg/myrepo',
     )
     # Tiered churn thresholds (lines changed → hours)
-    churn_tiny   = models.PositiveIntegerField(default=30,  help_text="Lines ≤ this → 0.25 hrs (tiny commit)")
-    churn_small  = models.PositiveIntegerField(default=100, help_text="Lines ≤ this → 0.75 hrs (small commit)")
+    churn_tiny   = models.PositiveIntegerField(default=30,  help_text="Lines ≤ this → 0.17 hrs (10 mins) (tiny commit)")
+    churn_small  = models.PositiveIntegerField(default=100, help_text="Lines ≤ this → 0.25 hrs (15 mins) (small commit)")
     churn_medium = models.PositiveIntegerField(default=300, help_text="Lines ≤ this → 1.5 hrs  (medium commit)")
     churn_large  = models.PositiveIntegerField(default=600, help_text="Lines ≤ this → 3.0 hrs  (large commit)")
     # Anything above churn_large → 6.0 hrs (huge commit)
 
     def churn_to_hours(self, churn: int) -> float:
         """Convert lines-changed count to estimated hours using project thresholds."""
-        if churn <= self.churn_tiny:   return 0.25
-        if churn <= self.churn_small:  return 0.75
+        if churn <= self.churn_tiny:   return 0.17  # 10 min
+        if churn <= self.churn_small:  return 0.25  # 15 min
         if churn <= self.churn_medium: return 1.5
         if churn <= self.churn_large:  return 3.0
         return 6.0

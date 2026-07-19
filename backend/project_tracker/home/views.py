@@ -167,6 +167,19 @@ def github_webhook(request):
                 if TimesheetTask.objects.filter(timesheet__project=project, description__startswith=commit_prefix).exists():
                     continue
                     
+                # Parse commit date first
+                timestamp_str = commit.get('timestamp')
+                commit_date = timezone.now().date()
+                if timestamp_str:
+                    try:
+                        parsed_dt = parse_datetime(timestamp_str)
+                        if parsed_dt:
+                            commit_date = parsed_dt.date()
+                    except ValueError:
+                        pass
+                
+                date_str = commit_date.strftime("%d %b %Y")
+                
                 # 1. Parse time from commit message (e.g. "[1.5h]")
                 hours = _parse_time_from_message(commit_message)
                 
@@ -182,7 +195,7 @@ def github_webhook(request):
                     else:
                         hours = 0.0  # Fallback to 0.0 if API fails or no changes
                         
-                task_description = f"[commit {commit_id[:7]}] {commit_message}"
+                task_description = f"[commit {commit_id[:7]}] ({date_str}) {commit_message}"
                 if additions or deletions:
                     task_description += f" (+{additions} -{deletions} lines)"
                     
@@ -194,16 +207,6 @@ def github_webhook(request):
                     
                 if not author_name:
                     author_name = github_username or commit.get('author', {}).get('name', 'Unknown')
-                    
-                timestamp_str = commit.get('timestamp')
-                commit_date = timezone.now().date()
-                if timestamp_str:
-                    try:
-                        parsed_dt = parse_datetime(timestamp_str)
-                        if parsed_dt:
-                            commit_date = parsed_dt.date()
-                    except ValueError:
-                        pass
                 
                 # Get or create a single Timesheet for this person on this day
                 timesheet, created = Timesheet.objects.get_or_create(
