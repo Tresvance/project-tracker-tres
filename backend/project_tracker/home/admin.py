@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.urls import path
@@ -103,7 +104,7 @@ class ProjectAdmin(admin.ModelAdmin):
                 'font-size:11px;font-weight:700;white-space:nowrap;">📜 {}</span>',
                 obj.active_deploy_script.label
             )
-        return format_html(
+        return mark_safe(
             '<span style="background:#2a2a2a;color:#888;padding:4px 10px;border-radius:4px;'
             'font-size:11px;white-space:nowrap;">— none selected —</span>'
         )
