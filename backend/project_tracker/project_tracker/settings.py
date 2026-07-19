@@ -128,7 +128,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # this is the folder where collectstatic will store files
 
 
-GITHUB_TOKEN = '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'
+GITHUB_TOKEN = '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'
 
 import os
 
