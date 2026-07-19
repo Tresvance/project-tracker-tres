@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
+import os
 
 
 class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
@@ -112,4 +113,44 @@ def github_webhook(request):
                 
         return Response({"message": f"Created {created_count} timesheets from commits"}, status=status.HTTP_201_CREATED)
         
-    return Response({"message": "Unhandled event type"}, status=status.HTTP_200_OK)
+    return Response({"message": "Unhandled event type"}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def show_logs(request):
+    logs = {}
+    paths = [
+        "/var/log/nginx/access.log",
+        "/var/log/nginx/error.log",
+        "/var/log/nginx/project-tracker.access.log",
+        "/var/log/nginx/project-tracker.error.log",
+        "/var/log/nginx/project_tracker.access.log",
+        "/var/log/nginx/project_tracker.error.log",
+    ]
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    lines = f.readlines()
+                    logs[path] = "".join(lines[-100:])
+            except Exception as e:
+                logs[path] = f"Error reading: {str(e)}"
+        else:
+            logs[path] = "Not found"
+            
+    # Read nginx configs
+    nginx_configs = {}
+    sites_enabled = "/etc/nginx/sites-enabled/"
+    if os.path.exists(sites_enabled):
+        try:
+            for filename in os.listdir(sites_enabled):
+                filepath = os.path.join(sites_enabled, filename)
+                with open(filepath, "r") as f:
+                    nginx_configs[filename] = f.read()
+        except Exception as e:
+            nginx_configs["error"] = str(e)
+    logs["nginx_configs"] = nginx_configs
+        
+    return Response(logs)
+
