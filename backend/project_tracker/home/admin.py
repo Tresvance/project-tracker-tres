@@ -585,29 +585,42 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
         grand_amount = 0
         sl = 1
 
+        from collections import defaultdict
+        employee_groups = defaultdict(list)
         for ts in timesheets:
-            tasks = ts.tasks.all()
-            task_count = tasks.count()
-            total_mins = round(float(ts.total_hours) * 60)
+            employee_groups[ts.employee_name].append(ts)
+
+        for employee_name, ts_list in employee_groups.items():
+            emp_total_hours = sum(float(ts.total_hours) for ts in ts_list)
+            emp_total_amount = sum(float(ts.total_amount) for ts in ts_list)
+            
+            emp_tasks = []
+            for ts in ts_list:
+                for task in ts.tasks.all():
+                    emp_tasks.append((task, ts.date))
+            
+            total_mins = round(emp_total_hours * 60)
             hrs = total_mins // 60
             mins = total_mins % 60
             time_str = f"{hrs}h {mins}m" if mins else f"{hrs}h"
-            amt = float(ts.total_amount)
-            amt_fmt = '{:,.2f}'.format(amt)
-            grand_hours += float(ts.total_hours)
-            grand_amount += amt
-
+            amt_fmt = '{:,.2f}'.format(emp_total_amount)
+            
+            grand_hours += emp_total_hours
+            grand_amount += emp_total_amount
+            
+            task_count = len(emp_tasks)
+            
             ts_rows += f"""
             <tr style="background:#f7fbfd;border-top:2px solid #e0eff7">
                 <td style="padding:10px 16px;font-size:12px;color:#aaa;font-weight:700">{str(sl).zfill(2)}</td>
-                <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#111">{ts.employee_name}</td>
-                <td style="padding:10px 16px;font-size:13px;color:#555">{ts.date.strftime('%d %b %Y')}</td>
+                <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#111">{employee_name}</td>
+                <td style="padding:10px 16px;font-size:13px;color:#555">All Dates</td>
                 <td style="padding:10px 16px;font-size:13px;color:#555;text-align:center">{task_count} tasks</td>
                 <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#29ABE2">{time_str}</td>
                 <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#111">&#8377;{amt_fmt}</td>
             </tr>"""
-
-            for task in tasks:
+            
+            for task, commit_date in emp_tasks:
                 t_mins = round(float(task.hours) * 60)
                 t_hrs = t_mins // 60
                 t_m = t_mins % 60
@@ -619,7 +632,7 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
                 <td style="padding:8px 16px;padding-left:28px;font-size:13px;color:#555">
                     <span style="color:#29ABE2;margin-right:6px">›</span>{task.description}
                 </td>
-                <td style="padding:8px 16px;font-size:13px;color:#555">{ts.date.strftime('%d %b %Y')}</td>
+                <td style="padding:8px 16px;font-size:13px;color:#555">{commit_date.strftime('%d %b %Y')}</td>
                 <td></td>
                 <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">{t_time}</td>
                 <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">&#8377;{task_amt}</td>
