@@ -35,4 +35,15 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"❌ TimesheetTask {tid} failed: {type(e).__name__}: {e}"))
                 
+        # Query raw database values for the corrupted task IDs
+        self.stdout.write("Fetching raw SQLite values for corrupted tasks...")
+        import sqlite3
+        from django.conf import settings
+        db_path = settings.DATABASES['default']['NAME']
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, hours, amount, description FROM home_timesheettask WHERE id IN (300, 301)")
+        for row in cursor.fetchall():
+            self.stdout.write(self.style.WARNING(f"Raw Row {row[0]}: hours={repr(row[1])} (type: {type(row[1]).__name__}), amount={repr(row[2])} (type: {type(row[2]).__name__}), description={repr(row[3])}"))
+        
         self.stdout.write("Done checking.")
