@@ -174,3 +174,20 @@ class TimesheetTask(models.Model):
             timesheet.total_hours = totals['total_h'] or 0
             timesheet.total_amount = totals['total_a'] or 0
             timesheet.save(update_fields=['total_hours', 'total_amount'])
+
+
+class BankAccount(models.Model):
+    name           = models.CharField(max_length=150, verbose_name="Account Holder Name")
+    bank_name      = models.CharField(max_length=150, verbose_name="Bank Name")
+    branch         = models.CharField(max_length=150, blank=True, verbose_name="Branch Name")
+    account_number = models.CharField(max_length=50, verbose_name="Account Number")
+    ifsc_code      = models.CharField(max_length=20, verbose_name="IFSC Code")
+    swift_code     = models.CharField(max_length=20, blank=True, verbose_name="SWIFT Code")
+
+    def __str__(self):
+        return f"{self.name} — {self.bank_name}"
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Bank Account"
+        verbose_name_plural = "Bank Accounts"

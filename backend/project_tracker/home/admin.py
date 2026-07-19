@@ -10,7 +10,7 @@ from datetime import date as dt, timedelta
 import paramiko
 import threading
 from django.core.cache import cache
-from .models import Project, Timesheet, TimesheetTask, DeployScript
+from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount
 
 
 # ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
@@ -585,6 +585,22 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
         grand_amount = 0
         sl = 1
 
+        # Fetch default bank account if configured
+        bank = BankAccount.objects.first()
+        bank_html = ""
+        if bank:
+            branch_str = f" ({bank.branch})" if bank.branch else ""
+            swift_str = f"<div><strong>SWIFT Code:</strong> {bank.swift_code}</div>" if bank.swift_code else ""
+            bank_html = f"""
+  <div style="font-size:12px;color:#555;line-height:1.6;border:1px solid #e8f0f5;border-radius:5px;padding:12px 18px;background:#fcfdfe;width:340px;text-align:left;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#aaa;font-weight:700;margin-bottom:6px">Bank Details for Payment</div>
+    <div><strong>Account Holder:</strong> {bank.name}</div>
+    <div><strong>Bank Name:</strong> {bank.bank_name}{branch_str}</div>
+    <div><strong>Account Number:</strong> {bank.account_number}</div>
+    <div><strong>IFSC Code:</strong> {bank.ifsc_code}</div>
+    {swift_str}
+  </div>"""
+
         from collections import defaultdict
         employee_groups = defaultdict(list)
         for ts in timesheets:
@@ -688,7 +704,7 @@ tr{{border-bottom:1px solid #f0f5f8}}
 .tl{{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#666;margin-bottom:3px}}
 .tv{{font-size:22px;font-weight:800;color:#29ABE2}}
 .tv-amt{{font-size:30px;font-weight:800;color:#fff}}
-.sigs{{margin:0 40px;display:flex;justify-content:space-between}}
+.sigs{{margin:0 40px;display:flex;justify-content:space-between;align-items:flex-end}}
 .sig-space{{height:44px}}
 .sig-line{{border-top:1px solid #ccc;padding-top:7px;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px}}
 .sig-name{{font-size:13px;font-weight:700;color:#111;margin-top:3px}}
@@ -768,7 +784,12 @@ tr{{border-bottom:1px solid #f0f5f8}}
 </div>
 
 <div class="sigs">
-  <div style="width:180px"><div class="sig-space"></div><div class="sig-line">Prepared by</div><div class="sig-name">Tresvance Softwares</div></div>
+  {bank_html}
+  <div style="width:180px;text-align:right">
+    <div class="sig-space"></div>
+    <div class="sig-line" style="text-align:right">Prepared by</div>
+    <div class="sig-name" style="text-align:right">Tresvance Softwares</div>
+  </div>
 </div>
 
 <div class="doc-footer">
@@ -811,3 +832,9 @@ class TimesheetAdmin(admin.ModelAdmin):
         return format_html('<strong style="color:#1a6b3a;">₹{}</strong>', amount)
     total_amount_display.short_description = 'Amount'
     total_amount_display.admin_order_field = 'total_amount'
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(admin.ModelAdmin):
+    list_display = ('name', 'bank_name', 'branch', 'account_number', 'ifsc_code', 'swift_code')
+    search_fields = ('name', 'bank_name', 'branch', 'account_number')
