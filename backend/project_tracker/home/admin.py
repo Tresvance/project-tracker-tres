@@ -486,9 +486,10 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
                 ts_rows += f"""
             <tr style="background:#fff">
                 <td style="padding:8px 16px;color:#ddd;font-size:11px"></td>
-                <td style="padding:8px 16px;padding-left:28px;font-size:13px;color:#555" colspan="2">
+                <td style="padding:8px 16px;padding-left:28px;font-size:13px;color:#555">
                     <span style="color:#29ABE2;margin-right:6px">›</span>{task.description}
                 </td>
+                <td style="padding:8px 16px;font-size:13px;color:#555">{ts.date.strftime('%d %b %Y')}</td>
                 <td></td>
                 <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">{t_time}</td>
                 <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888">&#8377;{task_amt}</td>
