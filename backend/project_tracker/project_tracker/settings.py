@@ -127,10 +127,13 @@ STATIC_URL = 'static/'
 # Add this line
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # this is the folder where collectstatic will store files
 
+# settings.py
 
-GITHUB_TOKEN = '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'
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "fallback_token_if_needed")
 
-import os
+
+
+
 
 DEPLOY_SSH_HOST = os.environ.get("DEPLOY_SSH_HOST", "194.164.148.205")  # or its IP
 DEPLOY_SSH_USER = os.environ.get("DEPLOY_SSH_USER", "root")
