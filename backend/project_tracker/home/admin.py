@@ -670,7 +670,7 @@ body{{font-family:'DM Sans',sans-serif;background:#fff;color:#111;font-size:14px
 .doc-info p{{font-size:11px;color:#aaa;margin-top:3px}}
 .period-bar{{background:#29ABE2;padding:10px 40px;display:flex;justify-content:space-between;align-items:center}}
 .period-bar span{{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px}}
-.meta{{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid #f0f5f8}}
+.meta{{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:2px solid #f0f5f8}}
 .mc{{padding:16px 24px;border-right:1px solid #f0f5f8}}
 .mc:last-child{{border-right:none}}
 .ml{{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#aaa;margin-bottom:4px;font-weight:600}}
@@ -734,6 +734,7 @@ tr{{border-bottom:1px solid #f0f5f8}}
   <div class="mc"><div class="ml">Mode</div><div class="mv">{project.mode}</div></div>
   <div class="mc"><div class="ml">Hourly Rate</div><div class="mv">&#8377;{project.hourly_rate}/hr</div></div>
   <div class="mc"><div class="ml">Total Entries</div><div class="mv">{timesheets.count()} timesheet(s)</div></div>
+  <div class="mc"><div class="ml">Total Amount</div><div class="mv" style="color:#1a6b3a;">&#8377;{grand_amt_fmt}</div></div>
 </div>
 
 <div class="sec">
@@ -768,7 +769,6 @@ tr{{border-bottom:1px solid #f0f5f8}}
 
 <div class="sigs">
   <div style="width:180px"><div class="sig-space"></div><div class="sig-line">Prepared by</div><div class="sig-name">Tresvance Softwares</div></div>
-  <div style="width:180px"><div class="sig-space"></div><div class="sig-line">Client Approval</div><div class="sig-name">&nbsp;</div></div>
 </div>
 
 <div class="doc-footer">
