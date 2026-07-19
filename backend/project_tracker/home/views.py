@@ -106,9 +106,14 @@ def github_webhook(request):
         for project in projects:
             for commit in commits:
                 commit_id = commit.get('id', '')
+                commit_message = commit.get('message', 'No commit message')
                 
-                # Skip if we already have this commit
-                if commit_id and Timesheet.objects.filter(github_sha=commit_id).exists():
+                # Format task description with commit ID prefix
+                task_description = f"[commit {commit_id[:7]}] {commit_message}"
+                
+                # Skip if we already have this commit registered in any task for this project
+                commit_prefix = f"[commit {commit_id[:7]}]"
+                if TimesheetTask.objects.filter(timesheet__project=project, description__startswith=commit_prefix).exists():
                     continue
                     
                 # Try to get GitHub Profile Display Name, fallback to Username, then Git Name
@@ -120,9 +125,7 @@ def github_webhook(request):
                 if not author_name:
                     author_name = github_username or commit.get('author', {}).get('name', 'Unknown')
                     
-                commit_message = commit.get('message', 'No commit message')
                 timestamp_str = commit.get('timestamp')
-                
                 commit_date = timezone.now().date()
                 if timestamp_str:
                     try:
@@ -132,28 +135,30 @@ def github_webhook(request):
                     except ValueError:
                         pass
                 
-                # Create the Timesheet with 0 hours, allowing manual time entry
-                timesheet = Timesheet.objects.create(
+                # Get or create a single Timesheet for this person on this day
+                timesheet, created = Timesheet.objects.get_or_create(
                     project=project,
                     employee_name=author_name,
                     date=commit_date,
-                    hourly_rate=project.hourly_rate,
-                    total_hours=0,
-                    total_amount=0,
                     source="GITHUB_COMMIT",
-                    github_sha=commit_id,
+                    defaults={
+                        'hourly_rate': project.hourly_rate,
+                        'total_hours': 0,
+                        'total_amount': 0,
+                        'github_sha': commit_id,
+                    }
                 )
                 
-                # Create the corresponding task with the commit message
+                # Create the task with the commit message under the grouped timesheet
                 TimesheetTask.objects.create(
                     timesheet=timesheet,
-                    description=commit_message,
+                    description=task_description,
                     hours=0,
                     amount=0,
                 )
                 created_count += 1
                 
-        return Response({"message": f"Created {created_count} timesheets from commits"}, status=status.HTTP_201_CREATED)
+        return Response({"message": f"Processed {created_count} commits into timesheets"}, status=status.HTTP_201_CREATED)
         
     return Response({"message": "Unhandled event type"}, status=status.HTTP_200_OK)
 
