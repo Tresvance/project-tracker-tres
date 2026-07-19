@@ -76,8 +76,9 @@ class Project(models.Model):
     # Anything above churn_large → 6.0 hrs (huge commit)
 
     def churn_to_hours(self, churn: int) -> float:
-        """Convert lines-changed count to estimated hours: 20 seconds per line."""
-        return round((churn * 20) / 3600, 2)
+        """Convert lines-changed count to estimated hours: 20 seconds per line (capped at 8.0 hours)."""
+        hours = (churn * 20) / 3600
+        return round(min(hours, 8.0), 2)
 
     def __str__(self):
         return self.name
