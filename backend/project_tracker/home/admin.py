@@ -738,7 +738,9 @@ p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
                 </td>
                 <td style="padding:8px 16px;font-size:13px;color:#555">{commit_date.strftime('%d %b %Y')}</td>
                 <td></td>
-                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888" class="task-time" data-hours="{task.hours}">{t_time}</td>
+                <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888" class="task-time" data-hours="{task.hours}">
+                    <input type="text" value="{t_time}" onchange="updateTaskTime(this)" class="time-input" />
+                </td>
                 <td style="padding:8px 16px;text-align:right;font-size:12px;color:#888" class="task-amount" data-amount="{task.amount}">&#8377;{task_amt}</td>
             </tr>"""
             sl += 1
@@ -801,6 +803,9 @@ tr{{border-bottom:1px solid #f0f5f8}}
 .circuit{{position:absolute;top:0;right:200px;width:160px;height:110px;z-index:1;opacity:0.8}}
 .remove-btn{{float:right;background:none;border:none;color:#e11d48;cursor:pointer;font-size:11px;font-weight:600;padding:2px 6px;margin-left:10px;border-radius:4px;display:inline-block;transition:all 0.1s ease;}}
 .remove-btn:hover{{background:#fee2e2;color:#b91c1c;}}
+.time-input{{background:transparent;border:none;color:#888;font-size:12px;text-align:right;width:75px;font-family:inherit;padding:2px 4px;border-bottom:1px dashed transparent;outline:none;}}
+.time-input:hover{{border-bottom-color:#ddd;}}
+.time-input:focus{{border-bottom-color:#29ABE2;color:#111;background:#f8fafc;}}
 @media print{{.printbar, .remove-btn{{display:none!important}}}}
 </style>
 </head>
@@ -847,7 +852,7 @@ tr{{border-bottom:1px solid #f0f5f8}}
   <small>{timesheets.count()} entries</small>
 </div>
 
-<table>
+<table id="timesheet-table" data-rate="{project.hourly_rate}">
   <thead>
     <tr>
       <th style="width:44px">Sl</th>
@@ -889,6 +894,104 @@ tr{{border-bottom:1px solid #f0f5f8}}
 </div>
 
 <script>
+function parseTimeToHours(str) {{
+    str = str.toLowerCase().trim();
+    if (!str) return 0;
+    
+    let hours = 0;
+    let mins = 0;
+    
+    if (str.includes('h') || str.includes('m')) {{
+        const hMatch = str.match(/(\d+\.?\d*)\s*h/);
+        const mMatch = str.match(/(\d+\.?\d*)\s*m/);
+        
+        if (hMatch) hours = parseFloat(hMatch[1]) || 0;
+        if (mMatch) mins = parseFloat(mMatch[1]) || 0;
+        
+        if (!hMatch && !mMatch) {{
+            const val = parseFloat(str) || 0;
+            if (str.endsWith('m')) return val / 60;
+            return val;
+        }}
+        return hours + (mins / 60);
+    }}
+    
+    return parseFloat(str) || 0;
+}}
+
+function updateTaskTime(input) {{
+    const row = input.closest('tr');
+    const cell = input.parentElement;
+    const empName = row.getAttribute('data-emp-name');
+    
+    const rawVal = input.value;
+    const newHours = parseTimeToHours(rawVal);
+    
+    const oldHours = parseFloat(cell.getAttribute('data-hours')) || 0;
+    const diffHours = newHours - oldHours;
+    
+    const table = document.getElementById('timesheet-table');
+    const hourlyRate = parseFloat(table.getAttribute('data-rate')) || 0;
+    const newAmount = newHours * hourlyRate;
+    
+    const amtCell = row.querySelector('.task-amount');
+    const oldAmount = parseFloat(amtCell.getAttribute('data-amount')) || 0;
+    const diffAmount = newAmount - oldAmount;
+    
+    cell.setAttribute('data-hours', newHours.toFixed(2));
+    amtCell.setAttribute('data-amount', newAmount.toFixed(2));
+    amtCell.innerHTML = `&#8377;${{newAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    
+    const hrsInt = Math.floor(newHours);
+    const minsInt = Math.round((newHours - hrsInt) * 60);
+    input.value = minsInt ? `${{hrsInt}}h ${{minsInt}}m` : `${{hrsInt}}h`;
+    
+    // 1. Update Employee Summary Row
+    const summaryRow = document.querySelector(`.emp-summary-row[data-emp-name="${{empName}}"]`);
+    if (summaryRow) {{
+        const empTimeCell = summaryRow.querySelector('.emp-time');
+        const empAmtCell = summaryRow.querySelector('.emp-amount');
+        
+        let empHours = parseFloat(empTimeCell.getAttribute('data-hours')) || 0;
+        let empAmount = parseFloat(empAmtCell.getAttribute('data-amount')) || 0;
+        
+        empHours = Math.max(0, empHours + diffHours);
+        empAmount = Math.max(0, empAmount + diffAmount);
+        
+        empTimeCell.setAttribute('data-hours', empHours.toFixed(2));
+        empAmtCell.setAttribute('data-amount', empAmount.toFixed(2));
+        
+        const empHrsInt = Math.floor(empHours);
+        const empMinsInt = Math.round((empHours - empHrsInt) * 60);
+        empTimeCell.innerText = empMinsInt ? `${{empHrsInt}}h ${{empMinsInt}}m` : `${{empHrsInt}}h`;
+        empAmtCell.innerHTML = `&#8377;${{empAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    }}
+    
+    // 2. Update Grand Totals
+    const grandTimeCell = document.getElementById('grand-total-time');
+    const grandAmtCell = document.getElementById('grand-total-amount');
+    
+    let grandHours = parseFloat(grandTimeCell.getAttribute('data-hours')) || 0;
+    let grandAmount = parseFloat(grandAmtCell.getAttribute('data-amount')) || 0;
+    
+    grandHours = Math.max(0, grandHours + diffHours);
+    grandAmount = Math.max(0, grandAmount + diffAmount);
+    
+    grandTimeCell.setAttribute('data-hours', grandHours.toFixed(2));
+    grandAmtCell.setAttribute('data-amount', grandAmount.toFixed(2));
+    
+    const totalHrsInt = Math.floor(grandHours);
+    const totalMinsInt = Math.round((grandHours - totalHrsInt) * 60);
+    grandTimeCell.innerText = totalMinsInt ? `${{totalHrsInt}}h ${{totalMinsInt}}m` : `${{totalHrsInt}}h`;
+    grandAmtCell.innerHTML = `&#8377;${{grandAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    
+    // 3. Update Meta Grid
+    const metaAmtCell = document.getElementById('meta-total-amount');
+    if (metaAmtCell) {{
+        metaAmtCell.innerHTML = `&#8377;${{grandAmount.toLocaleString('en-IN', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}`;
+    }}
+}}
+
 function removeCommitRow(btn) {{
     const row = btn.closest('tr');
     const empName = row.getAttribute('data-emp-name');
