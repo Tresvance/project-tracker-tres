@@ -133,6 +133,34 @@ def _get_github_profile_name(username):
     return None
 
 
+def _clean_time_from_message(message: str) -> str:
+    # Find all bracketed parts and remove those that we can parse as time spent
+    matches = re.findall(r'\[([^\]]+)\]', message)
+    cleaned = message
+    for text in matches:
+        parsed_text = text.lower().strip()
+        found = False
+        h_match = re.search(r'(\d*\.?\d+)\s*(?:h|hr|hour)', parsed_text)
+        if h_match:
+            found = True
+        m_match = re.search(r'(\d+)\s*(?:m|min)', parsed_text)
+        if m_match:
+            found = True
+        if not found:
+            try:
+                float(parsed_text)
+                found = True
+            except ValueError:
+                pass
+        
+        if found:
+            escaped_text = re.escape(text)
+            cleaned = re.sub(r'\[\s*' + escaped_text + r'\s*\]', '', cleaned)
+            
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def github_webhook(request):
@@ -162,12 +190,11 @@ def github_webhook(request):
                 commit_id = commit.get('id', '')
                 commit_message = commit.get('message', 'No commit message')
                 
-                # Format task description prefix & check for duplicate task
-                commit_prefix = f"[commit {commit_id[:7]}]"
-                if TimesheetTask.objects.filter(timesheet__project=project, description__startswith=commit_prefix).exists():
+                # Check for duplicate task using the github_sha field in TimesheetTask
+                if TimesheetTask.objects.filter(timesheet__project=project, github_sha=commit_id).exists():
                     continue
                     
-                # Parse commit date first
+                # Parse commit date
                 timestamp_str = commit.get('timestamp')
                 commit_date = timezone.now().date()
                 if timestamp_str:
@@ -178,26 +205,20 @@ def github_webhook(request):
                     except ValueError:
                         pass
                 
-                date_str = commit_date.strftime("%d %b %Y")
-                
                 # 1. Parse time from commit message (e.g. "[1.5h]")
                 hours = _parse_time_from_message(commit_message)
                 
-                additions, deletions = 0, 0
-                # 2. Fallback: estimate time based on churn from GitHub API
+                # 2. Fallback: estimate time based on churn from GitHub API (20 seconds per line changed)
                 if hours is None:
                     stats = _get_commit_stats(repo_full_name, commit_id)
-                    additions = stats.get("additions", 0)
-                    deletions = stats.get("deletions", 0)
                     churn = stats.get("churn", 0)
                     if churn > 0:
                         hours = project.churn_to_hours(churn)
                     else:
                         hours = 0.0  # Fallback to 0.0 if API fails or no changes
                         
-                task_description = f"[commit {commit_id[:7]}] ({date_str}) {commit_message}"
-                if additions or deletions:
-                    task_description += f" (+{additions} -{deletions} lines)"
+                # Clean the commit message by removing the time spent bracket
+                task_description = _clean_time_from_message(commit_message)
                     
                 # Try to get GitHub Profile Display Name, fallback to Username, then Git Name
                 github_username = commit.get('author', {}).get('username')
@@ -231,6 +252,7 @@ def github_webhook(request):
                     description=task_description,
                     hours=hours,
                     amount=task_amount,
+                    github_sha=commit_id,
                 )
                 
                 # Re-calculate totals on parent timesheet

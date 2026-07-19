@@ -76,12 +76,8 @@ class Project(models.Model):
     # Anything above churn_large → 6.0 hrs (huge commit)
 
     def churn_to_hours(self, churn: int) -> float:
-        """Convert lines-changed count to estimated hours using project thresholds."""
-        if churn <= self.churn_tiny:   return 0.17  # 10 min
-        if churn <= self.churn_small:  return 0.25  # 15 min
-        if churn <= self.churn_medium: return 1.5
-        if churn <= self.churn_large:  return 3.0
-        return 6.0
+        """Convert lines-changed count to estimated hours: 20 seconds per line."""
+        return round((churn * 20) / 3600, 2)
 
     def __str__(self):
         return self.name
@@ -119,6 +115,7 @@ class TimesheetTask(models.Model):
     description = models.TextField()
     hours       = models.DecimalField(max_digits=6, decimal_places=2)
     amount      = models.DecimalField(max_digits=10, decimal_places=2)
+    github_sha  = models.CharField(max_length=40, blank=True, help_text="Commit SHA")
 
     def __str__(self):
         return self.description[:60]
