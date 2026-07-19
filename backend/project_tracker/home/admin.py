@@ -686,7 +686,7 @@ body{{font-family:'DM Sans',sans-serif;background:#fff;color:#111;font-size:14px
 .doc-info p{{font-size:11px;color:#aaa;margin-top:3px}}
 .period-bar{{background:#29ABE2;padding:10px 40px;display:flex;justify-content:space-between;align-items:center}}
 .period-bar span{{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px}}
-.meta{{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:2px solid #f0f5f8}}
+.meta{{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid #f0f5f8}}
 .mc{{padding:16px 24px;border-right:1px solid #f0f5f8}}
 .mc:last-child{{border-right:none}}
 .ml{{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#aaa;margin-bottom:4px;font-weight:600}}
@@ -700,10 +700,10 @@ thead th{{padding:10px 16px;text-align:left;font-size:11px;text-transform:upperc
 th.r{{text-align:right}}
 th.c{{text-align:center}}
 tr{{border-bottom:1px solid #f0f5f8}}
-.total-bar{{margin:0 40px 40px;background:#111;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 5px 5px}}
+.total-bar{{margin:0 40px 40px;background:#f8fafc;color:#111;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border:1px solid #e8f0f5;border-top:none;border-radius:0 0 5px 5px}}
 .tl{{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#666;margin-bottom:3px}}
 .tv{{font-size:22px;font-weight:800;color:#29ABE2}}
-.tv-amt{{font-size:30px;font-weight:800;color:#fff}}
+.tv-amt{{font-size:30px;font-weight:800;color:#111}}
 .sigs{{margin:0 40px;display:flex;justify-content:space-between;align-items:flex-end}}
 .sig-space{{height:44px}}
 .sig-line{{border-top:1px solid #ccc;padding-top:7px;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px}}
@@ -747,7 +747,6 @@ tr{{border-bottom:1px solid #f0f5f8}}
 
 <div class="meta">
   <div class="mc"><div class="ml">Project</div><div class="mv">{project.name}</div></div>
-  <div class="mc"><div class="ml">Mode</div><div class="mv">{project.mode}</div></div>
   <div class="mc"><div class="ml">Hourly Rate</div><div class="mv">&#8377;{project.hourly_rate}/hr</div></div>
   <div class="mc"><div class="ml">Total Entries</div><div class="mv">{timesheets.count()} timesheet(s)</div></div>
   <div class="mc"><div class="ml">Total Amount</div><div class="mv" style="color:#1a6b3a;">&#8377;{grand_amt_fmt}</div></div>
