@@ -244,12 +244,34 @@ class ProjectAdmin(admin.ModelAdmin):
     active_script_display.short_description = 'Active Script'
 
     def report_buttons(self, obj):
+        # Query distinct months that have timesheets for this project
+        dates = Timesheet.objects.filter(project=obj).dates('date', 'month', order='DESC')
+        if not dates:
+            # Fallback: last 6 months
+            from datetime import date
+            from dateutil.relativedelta import relativedelta
+            today = date.today()
+            dates = [today - relativedelta(months=i) for i in range(6)]
+
+        options = []
+        for d in dates:
+            month_name = d.strftime('%b')
+            year_val = d.year
+            month_val = d.month
+            val = f"{obj.pk}/report/monthly/?year={year_val}&month={month_val}"
+            options.append(f'<option value="{val}" style="background:#fff;color:#333;">{month_name} {year_val}</option>')
+
+        options_str = "\n".join(options)
+
         return format_html(
-            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
-            '<a href="{}/report/monthly/" target="_blank" style="background:#1a6b3a;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📆 Monthly</a>'
-            '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📋 All</a>'
+            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;">'
+            '<select onchange="if(this.value) {{ window.open(this.value, \'_blank\'); this.selectedIndex=0; }}" style="background:#1a6b3a;color:#fff;padding:4px 8px;border-radius:4px;border:none;font-size:11px;font-weight:700;cursor:pointer;outline:none;height:24px;line-height:16px;">'
+            '<option value="" style="background:#fff;color:#333;">📆 Monthly</option>'
+            '{}'
+            '</select>'
+            '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;height:24px;line-height:16px;display:flex;align-items:center;">📋 All</a>'
             '</div>',
-            obj.pk, obj.pk
+            mark_safe(options_str), obj.pk
         )
     report_buttons.short_description = 'Reports'
 
