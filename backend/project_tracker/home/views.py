@@ -205,17 +205,24 @@ def github_webhook(request):
                     except ValueError:
                         pass
                 
-                # 1. Parse time from commit message (e.g. "[1.5h]")
-                hours = _parse_time_from_message(commit_message)
+                # Check if it is a merge commit (billing should be 0.0)
+                msg_lower = commit_message.lower().strip()
+                is_merge = msg_lower.startswith("merge ") or msg_lower.startswith("merge pull request") or "merge branch" in msg_lower
                 
-                # 2. Fallback: estimate time based on churn from GitHub API (20 seconds per line changed)
-                if hours is None:
-                    stats = _get_commit_stats(repo_full_name, commit_id)
-                    churn = stats.get("churn", 0)
-                    if churn > 0:
-                        hours = project.churn_to_hours(churn)
-                    else:
-                        hours = 0.0  # Fallback to 0.0 if API fails or no changes
+                if is_merge:
+                    hours = 0.0
+                else:
+                    # 1. Parse time from commit message (e.g. "[1.5h]")
+                    hours = _parse_time_from_message(commit_message)
+                    
+                    # 2. Fallback: estimate time based on churn from GitHub API (20 seconds per line changed)
+                    if hours is None:
+                        stats = _get_commit_stats(repo_full_name, commit_id)
+                        churn = stats.get("churn", 0)
+                        if churn > 0:
+                            hours = project.churn_to_hours(churn)
+                        else:
+                            hours = 0.0  # Fallback to 0.0 if API fails or no changes
                         
                 # Clean the commit message by removing the time spent bracket
                 task_description = _clean_time_from_message(commit_message)

@@ -87,18 +87,25 @@ class Command(BaseCommand):
                     except ValueError:
                         pass
                 
-                # Parse hours
-                hours = _parse_time_from_message(commit_message)
-                if hours is None:
-                    # Fetch detailed stats (churn)
-                    stats_data = _get_commit_stats(project.github_repo, sha)
-                    churn = stats_data.get("churn", 0)
-                    if churn > 0:
-                        hours = project.churn_to_hours(churn)
-                    else:
-                        hours = 0.0
-                    # Sleep slightly to avoid hitting GitHub API rate limit/abuse detection too fast
-                    time.sleep(0.2)
+                # Check if it is a merge commit (billing should be 0.0)
+                msg_lower = commit_message.lower().strip()
+                is_merge = msg_lower.startswith("merge ") or msg_lower.startswith("merge pull request") or "merge branch" in msg_lower
+                
+                if is_merge:
+                    hours = 0.0
+                else:
+                    # Parse hours
+                    hours = _parse_time_from_message(commit_message)
+                    if hours is None:
+                        # Fetch detailed stats (churn)
+                        stats_data = _get_commit_stats(project.github_repo, sha)
+                        churn = stats_data.get("churn", 0)
+                        if churn > 0:
+                            hours = project.churn_to_hours(churn)
+                        else:
+                            hours = 0.0
+                        # Sleep slightly to avoid hitting GitHub API rate limit/abuse detection too fast
+                        time.sleep(0.2)
                         
                 task_description = _clean_time_from_message(commit_message)
                 
