@@ -68,6 +68,136 @@ class ProjectAdmin(admin.ModelAdmin):
         }),
     )
 
+    actions = ['sync_github_commits']
+
+    def sync_github_commits(self, request, queryset):
+        from django.contrib import messages
+        import requests
+        from django.utils.dateparse import parse_datetime
+        from .models import Timesheet, TimesheetTask
+        from home.views import (
+            _parse_time_from_message,
+            _get_github_profile_name,
+            _get_commit_stats,
+            _clean_time_from_message
+        )
+        
+        total_created = 0
+        
+        for project in queryset:
+            if not project.github_repo:
+                self.message_user(request, f"⚠️ Project '{project.name}' has no GitHub Repo path configured.", level=messages.WARNING)
+                continue
+                
+            url = f"https://api.github.com/repos/{project.github_repo}/commits"
+            headers = {"Accept": "application/vnd.github+json"}
+            token = getattr(settings, "GITHUB_TOKEN", None)
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+                
+            try:
+                # Fetch last 100 commits
+                resp = requests.get(url, headers=headers, params={"per_page": 100}, timeout=15)
+                if resp.status_code != 200:
+                    self.message_user(
+                        request,
+                        f"❌ Failed to fetch commits for '{project.name}' from GitHub (Status {resp.status_code}). "
+                        f"Ensure repo path is correct and public, or GITHUB_TOKEN is set for private repos.",
+                        level=messages.ERROR
+                    )
+                    continue
+                    
+                commits_data = resp.json()
+            except Exception as e:
+                self.message_user(request, f"❌ Network error connecting to GitHub for '{project.name}': {str(e)}", level=messages.ERROR)
+                continue
+                
+            project_created = 0
+            for item in commits_data:
+                sha = item.get("sha", "")
+                commit_info = item.get("commit", {})
+                commit_message = commit_info.get("message", "")
+                
+                # Check duplicate task using the github_sha field in TimesheetTask
+                if TimesheetTask.objects.filter(timesheet__project=project, github_sha=sha).exists():
+                    continue
+                    
+                # Parse date
+                author_info = commit_info.get("author", {})
+                timestamp_str = author_info.get("date")
+                commit_date = dt.today()
+                if timestamp_str:
+                    try:
+                        parsed_dt = parse_datetime(timestamp_str)
+                        if parsed_dt:
+                            commit_date = parsed_dt.date()
+                    except ValueError:
+                        pass
+                
+                # Parse hours
+                hours = _parse_time_from_message(commit_message)
+                if hours is None:
+                    # Fetch detailed stats for this commit (churn)
+                    stats_data = _get_commit_stats(project.github_repo, sha)
+                    churn = stats_data.get("churn", 0)
+                    if churn > 0:
+                        hours = project.churn_to_hours(churn)
+                    else:
+                        hours = 0.0
+                        
+                task_description = _clean_time_from_message(commit_message)
+                
+                # Get GitHub Username
+                github_user = item.get("author") or {}
+                github_username = github_user.get("login")
+                
+                author_name = None
+                if github_username:
+                    author_name = _get_github_profile_name(github_username)
+                if not author_name:
+                    author_name = github_username or author_info.get("name") or "Unknown"
+                    
+                # Get or create Timesheet
+                timesheet, created = Timesheet.objects.get_or_create(
+                    project=project,
+                    employee_name=author_name,
+                    date=commit_date,
+                    source="GITHUB_COMMIT",
+                    defaults={
+                        'hourly_rate': project.hourly_rate,
+                        'total_hours': 0,
+                        'total_amount': 0,
+                        'github_sha': sha,
+                    }
+                )
+                
+                # Calculate the task amount based on hours and hourly rate
+                task_amount = round(float(hours) * float(project.hourly_rate), 2)
+                
+                # Create Task
+                TimesheetTask.objects.create(
+                    timesheet=timesheet,
+                    description=task_description,
+                    hours=hours,
+                    amount=task_amount,
+                    github_sha=sha,
+                )
+                
+                # Recalculate timesheet totals
+                from django.db.models import Sum
+                totals = timesheet.tasks.aggregate(total_h=Sum('hours'), total_a=Sum('amount'))
+                timesheet.total_hours = totals['total_h'] or 0
+                timesheet.total_amount = totals['total_a'] or 0
+                timesheet.save(update_fields=['total_hours', 'total_amount'])
+                
+                project_created += 1
+                total_created += 1
+                
+            self.message_user(request, f"✅ Successfully synced {project_created} new commits for '{project.name}'.", level=messages.SUCCESS)
+            
+    sync_github_commits.short_description = "🔄 Sync last 100 commits from GitHub"
+
+
     def get_urls(self):
         urls = super().get_urls()
         custom = [
