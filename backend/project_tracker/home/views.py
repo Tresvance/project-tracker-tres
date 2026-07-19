@@ -10,7 +10,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
-import os
+from django.core.cache import cache
+from django.conf import settings
+import requests
+
 
 
 class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
@@ -45,6 +48,37 @@ class TimesheetViewSet(viewsets.ModelViewSet):
         )
 
 
+def _get_github_profile_name(username):
+    if not username:
+        return None
+        
+    cache_key = f"github_profile_name_{username}"
+    profile_name = cache.get(cache_key)
+    if profile_name:
+        return profile_name
+        
+    url = f"https://api.github.com/users/{username}"
+    headers = {"Accept": "application/vnd.github+json"}
+    
+    token = getattr(settings, "GITHUB_TOKEN", None)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    try:
+        resp = requests.get(url, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            # "name" is the display name (e.g. "Jobin Jose"), "login" is username
+            profile_name = data.get("name") or data.get("login")
+            if profile_name:
+                cache.set(cache_key, profile_name, timeout=86400) # Cache for 24 hours
+                return profile_name
+    except Exception:
+        pass
+        
+    return None
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def github_webhook(request):
@@ -77,7 +111,15 @@ def github_webhook(request):
                 if commit_id and Timesheet.objects.filter(github_sha=commit_id).exists():
                     continue
                     
-                author_name = commit.get('author', {}).get('name', 'Unknown')
+                # Try to get GitHub Profile Display Name, fallback to Username, then Git Name
+                github_username = commit.get('author', {}).get('username')
+                author_name = None
+                if github_username:
+                    author_name = _get_github_profile_name(github_username)
+                    
+                if not author_name:
+                    author_name = github_username or commit.get('author', {}).get('name', 'Unknown')
+                    
                 commit_message = commit.get('message', 'No commit message')
                 timestamp_str = commit.get('timestamp')
                 
@@ -114,43 +156,4 @@ def github_webhook(request):
         return Response({"message": f"Created {created_count} timesheets from commits"}, status=status.HTTP_201_CREATED)
         
     return Response({"message": "Unhandled event type"}, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def show_logs(request):
-    logs = {}
-    paths = [
-        "/var/log/nginx/access.log",
-        "/var/log/nginx/error.log",
-        "/var/log/nginx/project-tracker.access.log",
-        "/var/log/nginx/project-tracker.error.log",
-        "/var/log/nginx/project_tracker.access.log",
-        "/var/log/nginx/project_tracker.error.log",
-    ]
-    for path in paths:
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    lines = f.readlines()
-                    logs[path] = "".join(lines[-100:])
-            except Exception as e:
-                logs[path] = f"Error reading: {str(e)}"
-        else:
-            logs[path] = "Not found"
-            
-    # Read nginx configs
-    nginx_configs = {}
-    sites_enabled = "/etc/nginx/sites-enabled/"
-    if os.path.exists(sites_enabled):
-        try:
-            for filename in os.listdir(sites_enabled):
-                filepath = os.path.join(sites_enabled, filename)
-                with open(filepath, "r") as f:
-                    nginx_configs[filename] = f.read()
-        except Exception as e:
-            nginx_configs["error"] = str(e)
-    logs["nginx_configs"] = nginx_configs
-        
-    return Response(logs)
 
