@@ -97,8 +97,8 @@ class Command(BaseCommand):
                         hours = project.churn_to_hours(churn)
                     else:
                         hours = 0.0
-                    # Sleep slightly to avoid hitting GitHub API rate limit too fast
-                    time.sleep(0.05)
+                    # Sleep slightly to avoid hitting GitHub API rate limit/abuse detection too fast
+                    time.sleep(0.2)
                         
                 task_description = _clean_time_from_message(commit_message)
                 
