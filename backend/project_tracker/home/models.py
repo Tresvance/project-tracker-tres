@@ -83,6 +83,31 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_rate = None
+        if not is_new:
+            try:
+                old_rate = Project.objects.get(pk=self.pk).hourly_rate
+            except Project.DoesNotExist:
+                pass
+                
+        super().save(*args, **kwargs)
+        
+        if old_rate is not None and old_rate != self.hourly_rate:
+            # Hourly rate changed! Update all associated timesheets and tasks in bulk
+            self.timesheets.all().update(hourly_rate=self.hourly_rate)
+            
+            from django.db.models import F
+            TimesheetTask.objects.filter(timesheet__project=self).update(
+                amount=F('hours') * self.hourly_rate
+            )
+            
+            # Recalculate timesheet totals in bulk
+            self.timesheets.all().update(
+                total_amount=F('total_hours') * self.hourly_rate
+            )
+
     class Meta:
         ordering = ["name"]
 
@@ -107,6 +132,11 @@ class Timesheet(models.Model):
     def __str__(self):
         return f"{self.employee_name} — {self.project} — {self.date}"
 
+    def save(self, *args, **kwargs):
+        if not self.hourly_rate and self.project:
+            self.hourly_rate = self.project.hourly_rate
+        super().save(*args, **kwargs)
+
     class Meta:
         ordering = ["-date", "-submitted_at"]
 
@@ -120,3 +150,27 @@ class TimesheetTask(models.Model):
 
     def __str__(self):
         return self.description[:60]
+
+    def save(self, *args, **kwargs):
+        # Calculate amount based on hours and timesheet's hourly rate
+        rate = self.timesheet.hourly_rate if self.timesheet else 0
+        self.amount = round(float(self.hours) * float(rate), 2)
+        super().save(*args, **kwargs)
+        
+        # Recalculate totals on parent timesheet
+        if self.timesheet:
+            from django.db.models import Sum
+            totals = self.timesheet.tasks.aggregate(total_h=Sum('hours'), total_a=Sum('amount'))
+            self.timesheet.total_hours = totals['total_h'] or 0
+            self.timesheet.total_amount = totals['total_a'] or 0
+            self.timesheet.save(update_fields=['total_hours', 'total_amount'])
+
+    def delete(self, *args, **kwargs):
+        timesheet = self.timesheet
+        super().delete(*args, **kwargs)
+        if timesheet:
+            from django.db.models import Sum
+            totals = timesheet.tasks.aggregate(total_h=Sum('hours'), total_a=Sum('amount'))
+            timesheet.total_hours = totals['total_h'] or 0
+            timesheet.total_amount = totals['total_a'] or 0
+            timesheet.save(update_fields=['total_hours', 'total_amount'])
