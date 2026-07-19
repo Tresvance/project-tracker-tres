@@ -201,7 +201,6 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path('<int:project_id>/report/weekly/', self.admin_site.admin_view(self.weekly_report), name='project_weekly_report'),
             path('<int:project_id>/report/monthly/', self.admin_site.admin_view(self.monthly_report), name='project_monthly_report'),
             path('<int:project_id>/report/all/', self.admin_site.admin_view(self.all_report), name='project_all_report'),
             path('<int:project_id>/deploy/', self.admin_site.admin_view(self.deploy_project), name='project_deploy'),
@@ -247,11 +246,10 @@ class ProjectAdmin(admin.ModelAdmin):
     def report_buttons(self, obj):
         return format_html(
             '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
-            '<a href="{}/report/weekly/" target="_blank" style="background:#29ABE2;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📅 Weekly</a>'
             '<a href="{}/report/monthly/" target="_blank" style="background:#1a6b3a;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📆 Monthly</a>'
             '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">📋 All</a>'
             '</div>',
-            obj.pk, obj.pk, obj.pk
+            obj.pk, obj.pk
         )
     report_buttons.short_description = 'Reports'
 
@@ -540,31 +538,92 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
 </div>
 </body></html>"""
 
-    def weekly_report(self, request, project_id):
-        try:
-            project = Project.objects.get(pk=project_id)
-        except Project.DoesNotExist:
-            return HttpResponse("Project not found.", status=404)
-        today = dt.today()
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        timesheets = Timesheet.objects.filter(
-            project=project, date__range=[week_start, week_end]
-        ).prefetch_related('tasks').order_by('date')
-        label = f"Week: {week_start.strftime('%d %b')} – {week_end.strftime('%d %b %Y')}"
-        return HttpResponse(self._build_report(project, timesheets, label, "Weekly Timesheet Report"))
-
     def monthly_report(self, request, project_id):
         try:
             project = Project.objects.get(pk=project_id)
         except Project.DoesNotExist:
             return HttpResponse("Project not found.", status=404)
-        today = dt.today()
-        label = f"Month: {today.strftime('%B %Y')}"
-        timesheets = Timesheet.objects.filter(
-            project=project, date__year=today.year, date__month=today.month
-        ).prefetch_related('tasks').order_by('date')
-        return HttpResponse(self._build_report(project, timesheets, label, "Monthly Timesheet Report"))
+
+        year_param = request.GET.get('year')
+        month_param = request.GET.get('month')
+
+        if year_param and month_param:
+            try:
+                year = int(year_param)
+                month = int(month_param)
+                import calendar
+                month_name = calendar.month_name[month]
+                label = f"Month: {month_name} {year}"
+                timesheets = Timesheet.objects.filter(
+                    project=project, date__year=year, date__month=month
+                ).prefetch_related('tasks').order_by('date')
+                return HttpResponse(self._build_report(project, timesheets, label, f"Monthly Timesheet Report - {month_name} {year}"))
+            except (ValueError, IndexError):
+                pass
+
+        # Otherwise, show month selector selection page
+        dates = Timesheet.objects.filter(project=project).dates('date', 'month', order='DESC')
+        if not dates:
+            from dateutil.relativedelta import relativedelta
+            today = dt.today()
+            dates = [today - relativedelta(months=i) for i in range(6)]
+
+        options_html = ""
+        for d in dates:
+            month_name = d.strftime('%B')
+            year_val = d.year
+            month_val = d.month
+            options_html += f"""
+            <a href="?year={year_val}&month={month_val}" style="
+                display: block;
+                background: #f8fafc;
+                border: 1px solid #e8f0f5;
+                color: #111;
+                padding: 14px 20px;
+                margin-bottom: 12px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 15px;
+                transition: all 0.2s ease;
+                text-align: center;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            " onmouseover="this.style.background='#1a6b3a';this.style.color='#fff';this.style.borderColor='#1a6b3a'"
+               onmouseout="this.style.background='#f8fafc';this.style.color='#111';this.style.borderColor='#e8f0f5'">
+                📅 {month_name} {year_val}
+            </a>"""
+
+        selection_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Select Month – {project.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}}
+.card{{background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.05);width:100%;max-width:400px;padding:32px;border-top:5px solid #1a6b3a}}
+h2{{font-size:20px;font-weight:700;margin-bottom:6px;color:#111;text-align:center}}
+p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
+.footer{{margin-top:20px;text-align:center;font-size:12px;color:#aaa}}
+.footer a{{color:#1a6b3a;text-decoration:none;font-weight:600}}
+</style>
+</head>
+<body>
+<div class="card">
+    <h2>Select Month</h2>
+    <p>For project <strong>{project.name}</strong></p>
+    <div style="max-height: 350px; overflow-y: auto; padding-right: 4px;">
+        {options_html}
+    </div>
+    <div class="footer">
+        <a href="../all/" style="color:#666;margin-right:15px">📋 View All</a>
+        <a href="../../">← Back to Projects</a>
+    </div>
+</div>
+</body>
+</html>"""
+        return HttpResponse(selection_html)
 
     def all_report(self, request, project_id):
         try:
