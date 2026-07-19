@@ -688,13 +688,19 @@ p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
             employee_groups[ts.employee_name].append(ts)
 
         for employee_name, ts_list in employee_groups.items():
-            emp_total_hours = sum(float(ts.total_hours) for ts in ts_list)
-            emp_total_amount = sum(float(ts.total_amount) for ts in ts_list)
-            
             emp_tasks = []
             for ts in ts_list:
                 for task in ts.tasks.all():
-                    emp_tasks.append((task, ts.date))
+                    desc_lower = task.description.lower().strip()
+                    is_merge = desc_lower.startswith("merge ") or desc_lower.startswith("merge pull request") or "merge branch" in desc_lower
+                    if not is_merge:
+                        emp_tasks.append((task, ts.date))
+            
+            if not emp_tasks:
+                continue
+
+            emp_total_hours = sum(float(task.hours) for task, _ in emp_tasks)
+            emp_total_amount = sum(float(task.amount) for task, _ in emp_tasks)
             
             total_mins = round(emp_total_hours * 60)
             hrs = total_mins // 60
