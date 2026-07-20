@@ -8,7 +8,7 @@ from .serializers import (
     TaskSerializer,
     AdminLoginSerializer,
 )
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -207,6 +207,7 @@ def _clean_time_from_message(message: str) -> str:
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def admin_login_view(request):
     email = request.data.get("email") or request.data.get("username")
@@ -221,6 +222,7 @@ def admin_login_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def github_webhook(request):
     event = request.META.get('HTTP_X_GITHUB_EVENT', 'ping')

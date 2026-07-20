@@ -291,8 +291,10 @@ export default function App() {
           setLoginError(res.data.error || "Invalid username or password");
         }
       })
-      .catch(() => {
-        setLoginError("Authentication server error. Try again.");
+      .catch((err) => {
+        console.error("Login request failed:", err);
+        const detailMsg = err.response?.data?.error || err.message || "Server connection issue.";
+        setLoginError(`Authentication server error: ${detailMsg}`);
       });
   };
 
