@@ -895,7 +895,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
   const weekTimeStr = weekMinsInt ? `${weekHrsInt}h ${weekMinsInt}m` : `${weekHrsInt}h`;
 
   const donutSegments = [
-    { label: "To Do", count: todoTasks.length, color: "#2563eb" },
+    { label: "To Do", count: todoTasks.length, color: "#00a2e8" },
     { label: "In Progress", count: inProgressTasks.length, color: "#10b981" },
     { label: "Review", count: backlogTasks.length, color: "#eab308" },
     { label: "Testing", count: testingTasks.length, color: "#8b5cf6" },
@@ -946,7 +946,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
               
               <button onClick={handleDashboardClick}
                 style={{
-                  background: "linear-gradient(135deg, #2563eb, #29ABE2)", color: "#fff", border: "none",
+                  background: "linear-gradient(135deg, #00a2e8, #29ABE2)", color: "#fff", border: "none",
                   padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "opacity .15s",
                   boxShadow: "0 4px 10px rgba(41,171,226,0.2)"
                 }}
@@ -1042,11 +1042,12 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
           
           <aside style={{ width: 260, background: "#0b1224", display: "flex", flexDirection: "column", flexShrink: 0 }}>
             <div style={{ padding: "28px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #1e293b" }}>
-              <div style={{ display: "flex", position: "relative", width: 28, height: 28 }}>
-                <span style={{ position: "absolute", left: 0, top: 0, width: 8, height: 28, background: "#2563eb", borderRadius: 4 }} />
-                <span style={{ position: "absolute", left: 12, top: 0, width: 16, height: 8, background: "#29ABE2", borderRadius: 4 }} />
-                <span style={{ position: "absolute", left: 12, bottom: 0, width: 8, height: 16, background: "#06b6d4", borderRadius: 4 }} />
-              </div>
+              <svg width="40" height="24" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Sleek V */}
+                <path d="M10 5 L28 45 L46 5" stroke="#00a8e8" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Sleek A */}
+                <path d="M54 45 L72 5 L90 45" stroke="#00a8e8" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               <div>
                 <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 800, letterSpacing: 1.5, margin: 0 }}>TRESVANCE</h2>
                 <p style={{ color: "#64748b", fontSize: 10, letterSpacing: 0.5, margin: 0 }}>Project Management Portal</p>
@@ -1061,7 +1062,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       width: "100%", border: "none", outline: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
                       fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "dashboard" ? "linear-gradient(135deg, #2563eb, #29ABE2)" : "transparent",
+                      background: activeTab === "dashboard" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
                       color: activeTab === "dashboard" ? "#fff" : "#94a3b8"
                     }}>
                     <DashboardIcon active={activeTab === "dashboard"} />
@@ -1074,7 +1075,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       width: "100%", border: "none", outline: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
                       fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "projects" || activeTab === "add_project" ? "linear-gradient(135deg, #2563eb, #29ABE2)" : "transparent",
+                      background: activeTab === "projects" || activeTab === "add_project" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
                       color: activeTab === "projects" || activeTab === "add_project" ? "#fff" : "#94a3b8"
                     }}>
                     <ProjectsIcon active={activeTab === "projects" || activeTab === "add_project"} />
@@ -1087,7 +1088,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       width: "100%", border: "none", outline: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
                       fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "tasks" ? "linear-gradient(135deg, #2563eb, #29ABE2)" : "transparent",
+                      background: activeTab === "tasks" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
                       color: activeTab === "tasks" ? "#fff" : "#94a3b8"
                     }}>
                     <TasksIcon active={activeTab === "tasks"} />
@@ -1182,7 +1183,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         📅 {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
                       </div>
                       <button onClick={() => setActiveTab("add_project")}
-                        style={{ border: "none", cursor: "pointer", background: "linear-gradient(135deg, #2563eb, #29ABE2)", color: "#fff", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
+                        style={{ border: "none", cursor: "pointer", background: "linear-gradient(135deg, #00a2e8, #29ABE2)", color: "#fff", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
                         + New Project
                       </button>
                     </div>
@@ -1259,7 +1260,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                             const projectTasks = kanbanTasks.filter(t => String(t.projectId) === String(p.id));
                             const completed = projectTasks.filter(t => t.column === "completed").length;
                             const progress = projectTasks.length ? Math.round((completed / projectTasks.length) * 100) : 0;
-                            const colors = ["#2563eb", "#10b981", "#f97316", "#8b5cf6", "#ef4444"];
+                            const colors = ["#00a2e8", "#10b981", "#f97316", "#8b5cf6", "#ef4444"];
                             const color = colors[idx % colors.length];
                             
                             return (
@@ -1310,7 +1311,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                     <div style={cardWrap}>
                       <div style={cardHeader}>
                         <h3 style={cardTitle}>Upcoming Deadlines</h3>
-                        <span style={{ fontSize: 11, color: "#2563eb", fontWeight: 700, cursor: "pointer" }}>View all</span>
+                        <span style={{ fontSize: 11, color: "#00a2e8", fontWeight: 700, cursor: "pointer" }}>View all</span>
                       </div>
                       <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", justifyContent: "center", flex: 1 }}>
                         <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, padding: "20px 0" }}>
@@ -1331,7 +1332,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
-                        <span style={{ fontSize: 12, color: "#2563eb", fontWeight: 700, cursor: "pointer" }}>View Board</span>
+                        <span style={{ fontSize: 12, color: "#00a2e8", fontWeight: 700, cursor: "pointer" }}>View Board</span>
                       </div>
 
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
@@ -1355,7 +1356,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                 {finalTasks.map(task => (
                                   <div key={task.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, padding: 10, boxShadow: "0 2px 4px rgba(0,0,0,0.02)", position: "relative" }}>
                                     <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>{task.project}</div>
-                                    <div onClick={() => handleOpenTaskDetails(task)} style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", cursor: "pointer", textDecoration: "underline", marginBottom: 8, lineHeight: 1.4, wordBreak: "break-word" }}>{task.title}</div>
+                                    <div onClick={() => handleOpenTaskDetails(task)} style={{ fontSize: 11, fontWeight: 700, color: "#00a2e8", cursor: "pointer", textDecoration: "underline", marginBottom: 8, lineHeight: 1.4, wordBreak: "break-word" }}>{task.title}</div>
                                     
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
                                       <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 700 }}>{task.code}</span>
@@ -1388,7 +1389,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                     <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", margin: 0 }}>Recent Activity</h3>
-                        <span style={{ fontSize: 11, color: "#2563eb", fontWeight: 700 }}>View all</span>
+                        <span style={{ fontSize: 11, color: "#00a2e8", fontWeight: 700 }}>View all</span>
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
@@ -1403,7 +1404,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                 <div>
                                   <div>
                                     <strong style={{ color: "#0f172a" }}>{ts.employee_name}</strong> logged{" "}
-                                    <strong style={{ color: "#2563eb" }}>{ts.total_hours} hrs</strong> on{" "}
+                                    <strong style={{ color: "#00a2e8" }}>{ts.total_hours} hrs</strong> on{" "}
                                     <span style={{ color: "#475569" }}>{ts.project_name}</span>
                                   </div>
                                   <div style={{ color: "#64748b", marginTop: 2, fontStyle: "italic" }}>"{taskDesc.substring(0, 45)}..."</div>
@@ -1527,7 +1528,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           Export ▾
                         </button>
                         <button onClick={() => { resetProjectForm(); setActiveTab("add_project"); }}
-                          style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                          style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           + Add Project
                         </button>
                       </div>
@@ -1540,8 +1541,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         return (
                           <button key={tab} onClick={() => { setProjectsSubTab(tab); setProjectsPage(1); }}
                             style={{
-                              background: "none", border: "none", borderBottom: active ? "2.5px solid #2563eb" : "2.5px solid transparent",
-                              color: active ? "#2563eb" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer"
+                              background: "none", border: "none", borderBottom: active ? "2.5px solid #00a2e8" : "2.5px solid transparent",
+                              color: active ? "#00a2e8" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer"
                             }}>
                             {tab}
                           </button>
@@ -1574,7 +1575,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       </select>
 
                       <button onClick={handleResetProjFilters}
-                        style={{ background: "none", border: "none", color: "#2563eb", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                        style={{ background: "none", border: "none", color: "#00a2e8", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center" }}>
                         Reset
                       </button>
                     </div>
@@ -1617,9 +1618,9 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                   </td>
                                   <td style={{ padding: "14px 20px" }}>
                                     <span onClick={() => { setSelectedProject(project); setActiveTab("project_details"); }}
-                                      style={{ fontWeight: 700, color: "#2563eb", cursor: "pointer", textDecoration: "underline" }}
+                                      style={{ fontWeight: 700, color: "#00a2e8", cursor: "pointer", textDecoration: "underline" }}
                                       onMouseEnter={e => e.currentTarget.style.color = "#1d4ed8"}
-                                      onMouseLeave={e => e.currentTarget.style.color = "#2563eb"}>
+                                      onMouseLeave={e => e.currentTarget.style.color = "#00a2e8"}>
                                       {project.name}
                                     </span>
                                   </td>
@@ -1674,8 +1675,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               return (
                                 <button key={pNum} onClick={() => setProjectsPage(pNum)}
                                   style={{
-                                    border: "1px solid", borderColor: active ? "#2563eb" : "#cbd5e1",
-                                    background: active ? "#2563eb" : "#fff", color: active ? "#fff" : "#475569",
+                                    border: "1px solid", borderColor: active ? "#00a2e8" : "#cbd5e1",
+                                    background: active ? "#00a2e8" : "#fff", color: active ? "#fff" : "#475569",
                                     borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, fontWeight: 700
                                   }}>
                                   {pNum}
@@ -1778,7 +1779,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           Export ▾
                         </button>
                         <button onClick={() => { resetTaskForm(); setActiveTab("add_task"); }}
-                          style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                          style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           + Create Task
                         </button>
                       </div>
@@ -1791,8 +1792,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         return (
                           <button key={tab} onClick={() => { setTasksSubTab(tab); setTasksPage(1); }}
                             style={{
-                              background: "none", border: "none", borderBottom: active ? "2.5px solid #2563eb" : "2.5px solid transparent",
-                              color: active ? "#2563eb" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer"
+                              background: "none", border: "none", borderBottom: active ? "2.5px solid #00a2e8" : "2.5px solid transparent",
+                              color: active ? "#00a2e8" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer"
                             }}>
                             {tab}
                           </button>
@@ -1822,7 +1823,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                   {finalTasks.map(task => (
                                     <div key={task.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, padding: 10, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
                                       <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>{task.project}</div>
-                                      <div onClick={() => handleOpenTaskDetails(task)} style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", cursor: "pointer", textDecoration: "underline", marginBottom: 8, lineHeight: 1.4, wordBreak: "break-word" }}>{task.title}</div>
+                                      <div onClick={() => handleOpenTaskDetails(task)} style={{ fontSize: 11, fontWeight: 700, color: "#00a2e8", cursor: "pointer", textDecoration: "underline", marginBottom: 8, lineHeight: 1.4, wordBreak: "break-word" }}>{task.title}</div>
                                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
                                         <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 700 }}>{task.code}</span>
                                         <UserAvatar name={task.developer} size={22} />
@@ -1883,7 +1884,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           </div>
 
                           <button onClick={handleResetFilters}
-                            style={{ background: "none", border: "none", color: "#2563eb", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                            style={{ background: "none", border: "none", color: "#00a2e8", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center" }}>
                             Reset
                           </button>
                         </div>
@@ -1927,7 +1928,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                       <td style={{ padding: "14px 20px" }}>
                                         <span onClick={() => handleOpenTaskDetails(task)}
                                           style={{ fontWeight: 700, color: "#0f172a", cursor: "pointer", textDecoration: "none" }}
-                                          onMouseEnter={e => e.currentTarget.style.color = "#2563eb"}
+                                          onMouseEnter={e => e.currentTarget.style.color = "#00a2e8"}
                                           onMouseLeave={e => e.currentTarget.style.color = "#0f172a"}>
                                           {task.title}
                                         </span>
@@ -1953,7 +1954,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                       <td style={{ padding: "14px 20px" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                           <div style={{ width: 60, height: 6, background: "#f1f5f9", borderRadius: 3, overflow: "hidden" }}>
-                                            <div style={{ width: `${progressPct}%`, height: "100%", background: progressPct === 100 ? "#10b981" : "#2563eb" }} />
+                                            <div style={{ width: `${progressPct}%`, height: "100%", background: progressPct === 100 ? "#10b981" : "#00a2e8" }} />
                                           </div>
                                           <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>{progressPct}%</span>
                                         </div>
@@ -1988,8 +1989,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                   return (
                                     <button key={pNum} onClick={() => setTasksPage(pNum)}
                                       style={{
-                                        border: "1px solid", borderColor: active ? "#2563eb" : "#cbd5e1",
-                                        background: active ? "#2563eb" : "#fff", color: active ? "#fff" : "#475569",
+                                        border: "1px solid", borderColor: active ? "#00a2e8" : "#cbd5e1",
+                                        background: active ? "#00a2e8" : "#fff", color: active ? "#fff" : "#475569",
                                         borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, fontWeight: 700
                                       }}>
                                       {pNum}
@@ -2042,7 +2043,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         Cancel
                       </button>
                       <button onClick={handleSaveProject}
-                        style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                        style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                         {isEditingProject ? "Save Changes" : "Save Project"}
                       </button>
                     </div>
@@ -2240,7 +2241,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           ))}
                         </div>
                         <button type="button" onClick={() => addTeamMember("Jibin Jose", "Manager")}
-                          style={{ border: "none", background: "none", color: "#2563eb", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 12, padding: 0 }}>
+                          style={{ border: "none", background: "none", color: "#00a2e8", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 12, padding: 0 }}>
                           + Add More Members
                         </button>
                       </div>
@@ -2279,7 +2280,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         Cancel
                       </button>
                       <button onClick={handleSaveTask}
-                        style={{ background: "#2563eb", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 10px rgba(37,99,235,0.2)" }}>
+                        style={{ background: "#00a2e8", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 10px rgba(37,99,235,0.2)" }}>
                         Save Task
                       </button>
                     </div>
@@ -2354,7 +2355,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         <div style={{ display: "flex", gap: 10 }}>
                           <input type="text" value={taskChecklistInput} onChange={e => setTaskChecklistInput(e.target.value)} style={lightInputStyle} placeholder="Add checklist item" />
                           <button type="button" onClick={addChecklistItem}
-                            style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: 13, fontWeight: 700, padding: "0 8px" }}>
+                            style={{ background: "none", border: "none", color: "#00a2e8", cursor: "pointer", fontSize: 13, fontWeight: 700, padding: "0 8px" }}>
                             + Add item
                           </button>
                         </div>
@@ -2378,7 +2379,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         <label style={fieldLabelStyle}>Attachments (Optional)</label>
                         <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px", textAlign: "center", cursor: "pointer", background: "#f8fafc" }}>
                           <div style={{ fontSize: 24, color: "#94a3b8" }}>☁️</div>
-                          <div style={{ fontSize: 12, color: "#475569", fontWeight: 700, marginTop: 8 }}>Drag & drop files here or <span style={{ color: "#2563eb" }}>click to upload</span></div>
+                          <div style={{ fontSize: 12, color: "#475569", fontWeight: 700, marginTop: 8 }}>Drag & drop files here or <span style={{ color: "#00a2e8" }}>click to upload</span></div>
                           <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>Max file size: 20MB</div>
                         </div>
                       </div>
@@ -2638,8 +2639,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         return (
                           <button key={tab.key} onClick={() => setDetailsActiveTab(tab.key)}
                             style={{
-                              background: "none", border: "none", borderBottom: active ? "2.5px solid #2563eb" : "2.5px solid transparent",
-                              color: active ? "#2563eb" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer",
+                              background: "none", border: "none", borderBottom: active ? "2.5px solid #00a2e8" : "2.5px solid transparent",
+                              color: active ? "#00a2e8" : "#64748b", padding: "10px 4px", fontSize: 13, fontWeight: active ? 800 : 600, cursor: "pointer",
                               whiteSpace: "nowrap"
                             }}>
                             {tab.label}
@@ -2668,7 +2669,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               <span style={{ color: "#0f172a", fontWeight: 700 }}>{details.estimatedHours} hrs</span>
 
                               <span style={{ color: "#64748b", fontWeight: 600 }}>Total Logged Hours</span>
-                              <span style={{ color: "#2563eb", fontWeight: 700 }}>{totalLoggedHours} hrs</span>
+                              <span style={{ color: "#00a2e8", fontWeight: 700 }}>{totalLoggedHours} hrs</span>
 
                               <span style={{ color: "#64748b", fontWeight: 600 }}>Department</span>
                               <span style={{ color: "#0f172a", fontWeight: 700 }}>{details.department}</span>
@@ -2764,7 +2765,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               </div>
                             </div>
 
-                            <span style={{ color: "#2563eb", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 16 }}>View all milestones</span>
+                            <span style={{ color: "#00a2e8", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 16 }}>View all milestones</span>
                           </div>
 
                         </div>
@@ -2789,7 +2790,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                             )}
                             
                             <div onClick={() => setShowAddMemberModal(true)}
-                              style={{ border: "1.5px dashed #cbd5e1", borderRadius: 8, padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#2563eb", cursor: "pointer", minWidth: 140 }}>
+                              style={{ border: "1.5px dashed #cbd5e1", borderRadius: 8, padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#00a2e8", cursor: "pointer", minWidth: 140 }}>
                               <span style={{ fontSize: 16, fontWeight: "bold" }}>+</span>
                               <span style={{ fontSize: 12, fontWeight: 700 }}>Add Member</span>
                             </div>
@@ -2816,7 +2817,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                             <div style={{ fontSize: 12, color: "#94a3b8" }}>No specific members assigned yet.</div>
                           )}
                           <div onClick={() => setShowAddMemberModal(true)}
-                            style={{ border: "1.5px dashed #cbd5e1", borderRadius: 8, padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#2563eb", cursor: "pointer", minWidth: 160 }}>
+                            style={{ border: "1.5px dashed #cbd5e1", borderRadius: 8, padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#00a2e8", cursor: "pointer", minWidth: 160 }}>
                             <span style={{ fontSize: 16, fontWeight: "bold" }}>+</span>
                             <span style={{ fontSize: 13, fontWeight: 700 }}>Add Member</span>
                           </div>
@@ -2870,7 +2871,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               <tbody>
                                 {projectTasks.map(t => (
                                   <tr key={t.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                                    <td onClick={() => handleOpenTaskDetails(t)} style={{ padding: "12px 8px", fontWeight: 700, color: "#2563eb", cursor: "pointer", textDecoration: "underline" }}>{t.title}</td>
+                                    <td onClick={() => handleOpenTaskDetails(t)} style={{ padding: "12px 8px", fontWeight: 700, color: "#00a2e8", cursor: "pointer", textDecoration: "underline" }}>{t.title}</td>
                                     <td style={{ padding: "12px 8px" }}>{t.developer}</td>
                                     <td style={{ padding: "12px 8px" }}>
                                       <span style={{
@@ -2905,7 +2906,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         <span style={{ fontSize: 32 }}>📁</span>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginTop: 12, marginBottom: 6 }}>No Files Uploaded</h3>
                         <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 16px 0" }}>Drag and drop files here to upload project documents.</p>
-                        <button style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                        <button style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                           Upload File
                         </button>
                       </div>
@@ -2932,7 +2933,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                   <tr key={ts.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                     <td style={{ padding: "12px 8px" }}>{formatDateStr(ts.date)}</td>
                                     <td style={{ padding: "12px 8px", fontWeight: 700 }}>{ts.employee_name}</td>
-                                    <td style={{ padding: "12px 8px", color: "#2563eb", fontWeight: 700 }}>{ts.total_hours} hrs</td>
+                                    <td style={{ padding: "12px 8px", color: "#00a2e8", fontWeight: 700 }}>{ts.total_hours} hrs</td>
                                     <td style={{ padding: "12px 8px" }}>
                                       {ts.tasks.map((task, idx) => (
                                         <div key={idx} style={{ color: "#475569" }}>• {task.description} ({task.hours}h)</div>
@@ -2952,7 +2953,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         <span style={{ fontSize: 32 }}>⚠️</span>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginTop: 12, marginBottom: 6 }}>No Active Issues</h3>
                         <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 16px 0" }}>Create an issue if you encounter bugs or blockers.</p>
-                        <button style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                        <button style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                           Create Issue
                         </button>
                       </div>
@@ -2963,7 +2964,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Project Documentation & Notes</h3>
                         <textarea placeholder="Write project notes here..." defaultValue={details.description}
                           style={{ width: "100%", minHeight: 180, border: "1px solid #cbd5e1", borderRadius: 6, padding: 14, fontSize: 13, color: "#0f172a", outline: "none", boxSizing: "border-box", resize: "vertical", marginTop: 16 }} />
-                        <button style={{ background: "linear-gradient(135deg, #2563eb, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 14 }}>
+                        <button style={{ background: "linear-gradient(135deg, #00a2e8, #29ABE2)", border: "none", borderRadius: 6, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 14 }}>
                           Save Notes
                         </button>
                       </div>
@@ -3124,7 +3125,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               <input type="text" placeholder="Add checklist item" value={taskDetailsChecklistInput} onChange={e => setTaskDetailsChecklistInput(e.target.value)}
                                 style={{ flex: 1, height: 32, border: "1px solid #cbd5e1", borderRadius: 6, padding: "0 10px", fontSize: 12 }} />
                               <button onClick={handleAddChecklistDetailsItem}
-                                style={{ background: "none", border: "none", color: "#2563eb", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                                style={{ background: "none", border: "none", color: "#00a2e8", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                                 + Add item
                               </button>
                             </div>
@@ -3173,7 +3174,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
 
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ color: "#64748b", fontWeight: 600 }}>Actual Hours</span>
-                            <span style={{ color: "#2563eb", fontWeight: 700 }}>{selectedTask.actual_hours} hrs</span>
+                            <span style={{ color: "#00a2e8", fontWeight: 700 }}>{selectedTask.actual_hours} hrs</span>
                           </div>
 
                           {/* Hours logging utility */}
@@ -3183,7 +3184,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                               <input type="number" placeholder="Hours" value={loggedActualHours} onChange={e => setLoggedActualHours(e.target.value)}
                                 style={{ width: 80, height: 28, border: "1px solid #cbd5e1", borderRadius: 6, padding: "0 8px", fontSize: 11 }} />
                               <button onClick={handleLogHours}
-                                style={{ background: "#2563eb", border: "none", borderRadius: 6, color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                                style={{ background: "#00a2e8", border: "none", borderRadius: 6, color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
                                 Log
                               </button>
                             </div>
@@ -3250,7 +3251,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                                   <div style={{ fontSize: 9, color: "#94a3b8" }}>{(file.sizeBytes / 1024 / 1024).toFixed(1)} MB • {formatDateStr(file.uploadedAt)}</div>
                                 </div>
                               </div>
-                              <span style={{ color: "#2563eb", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Download</span>
+                              <span style={{ color: "#00a2e8", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Download</span>
                             </div>
                           ))}
 
@@ -3258,7 +3259,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: 16, textAlign: "center", cursor: "pointer", background: "#f8fafc", position: "relative" }}>
                             <input type="file" onChange={handleUploadTaskAttachment} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} />
                             <div style={{ fontSize: 20, color: "#94a3b8" }}>☁️</div>
-                            <div style={{ fontSize: 11, color: "#475569", fontWeight: 700, marginTop: 6 }}>Drag & drop files or <span style={{ color: "#2563eb" }}>click to upload</span></div>
+                            <div style={{ fontSize: 11, color: "#475569", fontWeight: 700, marginTop: 6 }}>Drag & drop files or <span style={{ color: "#00a2e8" }}>click to upload</span></div>
                           </div>
                         </div>
                       </div>
@@ -3291,7 +3292,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           <textarea placeholder="Write a comment..." value={taskDetailsCommentInput} onChange={e => setTaskDetailsCommentInput(e.target.value)}
                             style={{ flex: 1, minHeight: 48, maxHeight: 80, border: "1px solid #cbd5e1", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#0f172a", resize: "none", outline: "none" }} />
                           <button onClick={handlePostTaskComment}
-                            style={{ background: "#2563eb", border: "none", borderRadius: 6, color: "#fff", width: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, cursor: "pointer" }}>
+                            style={{ background: "#00a2e8", border: "none", borderRadius: 6, color: "#fff", width: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, cursor: "pointer" }}>
                             ➤
                           </button>
                         </div>
@@ -3379,7 +3380,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                 <button type="submit"
                   style={{
                     flex: 1, padding: "11px", borderRadius: 6, border: "none",
-                    background: "linear-gradient(135deg, #2563eb, #29ABE2)",
+                    background: "linear-gradient(135deg, #00a2e8, #29ABE2)",
                     color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer"
                   }}>
                   Login
@@ -3444,7 +3445,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                 <button onClick={handleAddMemberToProjectSubmit}
                   style={{
                     flex: 1, padding: "10px", borderRadius: 6, border: "none",
-                    background: "linear-gradient(135deg, #2563eb, #29ABE2)",
+                    background: "linear-gradient(135deg, #00a2e8, #29ABE2)",
                     color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer"
                   }}>
                   Add Member
@@ -3469,7 +3470,7 @@ const statsCard = {
 const statsLbl = { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "#64748b", fontWeight: 700 };
 const statsVal = { fontSize: 24, fontWeight: 800, color: "#0f172a", marginTop: 4 };
 const statsIcon = { width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 };
-const statsLink = { fontSize: 11, color: "#2563eb", fontWeight: 700, marginTop: "auto", cursor: "pointer", display: "inline-block" };
+const statsLink = { fontSize: 11, color: "#00a2e8", fontWeight: 700, marginTop: "auto", cursor: "pointer", display: "inline-block" };
 
 const cardWrap = { background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", boxShadow: "0 4px 20px rgba(0,0,0,0.02)" };
 const cardHeader = { padding: "20px 20px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" };
