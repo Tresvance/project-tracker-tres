@@ -1,10 +1,12 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Project, Timesheet, TimesheetTask
+from .models import Project, Timesheet, TimesheetTask, DeployScript, Task, AdminLogin
 from .serializers import (
     ProjectSerializer,
     TimesheetSerializer,
     TimesheetCreateSerializer,
+    TaskSerializer,
+    AdminLoginSerializer,
 )
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -18,9 +20,52 @@ import re
 
 
 
-class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class ProjectViewSet(viewsets.ModelViewSet):
     queryset         = Project.objects.all()
     serializer_class = ProjectSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        name = data.get("name")
+        mode = data.get("mode", "DEV")
+        version = data.get("version", "")
+        url = data.get("url", "")
+        remarks = data.get("remarks", "")
+        hourly_rate = data.get("hourly_rate", 0)
+        test_deploy_command = data.get("test_deploy_command", "")
+        deploy_command = data.get("deploy_command", "")
+        github_repo = data.get("github_repo", "")
+        
+        project = Project.objects.create(
+            name=name,
+            mode=mode,
+            version=version,
+            url=url,
+            remarks=remarks,
+            hourly_rate=hourly_rate,
+            test_deploy_command=test_deploy_command,
+            deploy_command=deploy_command,
+            github_repo=github_repo
+        )
+        
+        deploy_scripts_data = data.get("deploy_scripts", [])
+        created_scripts = []
+        for ds in deploy_scripts_data:
+            label = ds.get("label")
+            cmd = ds.get("command")
+            if label and cmd:
+                script = DeployScript.objects.create(
+                    project=project,
+                    label=label,
+                    command=cmd
+                )
+                created_scripts.append(script)
+                
+        if created_scripts:
+            project.active_deploy_script = created_scripts[0]
+            project.save()
+
+        return Response(ProjectSerializer(project).data, status=status.HTTP_201_CREATED)
 
 
 class TimesheetViewSet(viewsets.ModelViewSet):
@@ -163,6 +208,20 @@ def _clean_time_from_message(message: str) -> str:
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def admin_login_view(request):
+    email = request.data.get("email") or request.data.get("username")
+    password = request.data.get("password")
+    
+    from .models import AdminLogin
+    user = AdminLogin.objects.filter(email=email, password=password).first()
+    if user:
+        return Response({"success": True, "name": user.name})
+    else:
+        return Response({"success": False, "error": "Invalid credentials"})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def github_webhook(request):
     event = request.META.get('HTTP_X_GITHUB_EVENT', 'ping')
     if event == 'ping':
@@ -274,4 +333,14 @@ def github_webhook(request):
         return Response({"message": f"Processed {created_count} commits into timesheets"}, status=status.HTTP_201_CREATED)
         
     return Response({"message": "Unhandled event type"}, status=status.HTTP_200_OK)
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset         = Task.objects.all()
+    serializer_class = TaskSerializer
+
+
+class AdminLoginViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset         = AdminLogin.objects.all()
+    serializer_class = AdminLoginSerializer
 

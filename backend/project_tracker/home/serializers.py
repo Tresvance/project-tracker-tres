@@ -1,13 +1,11 @@
 from rest_framework import serializers
-from .models import Project, Timesheet, TimesheetTask
+from .models import Project, Timesheet, TimesheetTask, Task, AdminLogin
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Project
-        fields = ['id', 'name', 'mode', 'version', 'url', 'remarks', 'hourly_rate']
-        # Note: github_repo and churn thresholds are intentionally excluded
-        # so employees cannot see billing or repo config
+        fields = ['id', 'name', 'mode', 'version', 'url', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'deploy_command']
 
 
 class TimesheetTaskInputSerializer(serializers.Serializer):
@@ -71,3 +69,17 @@ class TimesheetSerializer(serializers.ModelSerializer):
             'source', 'source_label', 'github_sha', 'github_pr_number',
             'hours_overridden', 'tasks',
         ]
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(source='project.name', read_only=True)
+
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+
+class AdminLoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdminLogin
+        fields = ['id', 'name', 'email']

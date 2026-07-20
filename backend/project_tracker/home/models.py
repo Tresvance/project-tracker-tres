@@ -190,4 +190,58 @@ class BankAccount(models.Model):
     class Meta:
         ordering = ["name"]
         verbose_name = "Bank Account"
-        verbose_name_plural = "Bank Accounts"
+        verbose_name_plural = "Bank Accounts"
+
+
+class AdminLogin(models.Model):
+    name = models.CharField(max_length=150, default="Jibin Jose")
+    email = models.EmailField(unique=True, default="jibin@tresvance.com")
+    password = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Admin Login"
+        verbose_name_plural = "Admin Logins"
+
+
+class Task(models.Model):
+    PRIORITY_CHOICES = [
+        ("Low", "Low"),
+        ("Medium", "Medium"),
+        ("High", "High"),
+        ("Critical", "Critical"),
+    ]
+    STATUS_CHOICES = [
+        ("To Do", "To Do"),
+        ("In Progress", "In Progress"),
+        ("Testing", "Testing"),
+        ("Completed", "Completed"),
+    ]
+
+    name = models.CharField(max_length=250)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks_list")
+    milestone = models.CharField(max_length=150, blank=True)
+    description = models.TextField(blank=True)
+    checklist = models.JSONField(default=list, blank=True)
+    assigned_to = models.CharField(max_length=150)
+    assigned_by = models.CharField(max_length=150, default="Jibin Jose")
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Low")
+    due_date = models.DateField(null=True, blank=True)
+    estimated_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="To Do")
+    tags = models.JSONField(default=list, blank=True)
+    actual_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    comments = models.JSONField(default=list, blank=True)
+    activity_log = models.JSONField(default=list, blank=True)
+    attachments = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Task"
+        verbose_name_plural = "Tasks"

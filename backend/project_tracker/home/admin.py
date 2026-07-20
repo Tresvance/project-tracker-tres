@@ -10,7 +10,7 @@ from datetime import date as dt, timedelta
 import paramiko
 import threading
 from django.core.cache import cache
-from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount
+from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task
 
 
 # ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
@@ -1102,4 +1102,24 @@ class TimesheetAdmin(admin.ModelAdmin):
 @admin.register(BankAccount)
 class BankAccountAdmin(admin.ModelAdmin):
     list_display = ('name', 'bank_name', 'branch', 'account_number', 'ifsc_code', 'swift_code')
-    search_fields = ('name', 'bank_name', 'branch', 'account_number')
+    search_fields = ('name', 'bank_name', 'branch', 'account_number')
+
+
+@admin.register(AdminLogin)
+class AdminLoginAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'password')
+    search_fields = ('name', 'email')
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ('name', 'project', 'assigned_to', 'priority', 'status', 'due_date')
+    list_filter = ('project', 'priority', 'status', 'due_date')
+    search_fields = ('name', 'description', 'assigned_to')
+
+
+
+
+admin.site.site_header = mark_safe(
+    'Tresvance Softwares Admin <a href="/" target="_blank" style="display: inline-block; vertical-align: middle; margin-left: 20px; background: #29ABE2; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; border: 1.5px solid #29ABE2; transition: all 0.2s;">💻 Open PM Portal</a>'
+)
+admin.site.site_title = "Tresvance Admin Portal"
+admin.site.index_title = "Project Tracker Admin"
