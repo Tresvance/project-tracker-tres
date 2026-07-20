@@ -3,9 +3,9 @@ import axios from "axios";
 import "./App.css";
 
 // -- SVG Icons --
-function DashboardIcon({ size = 20, active = false }) {
+function DashboardIcon({ size = 20, active = false, color }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "#94a3b8"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || (active ? "#fff" : "#94a3b8")} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="9" />
       <rect x="14" y="3" width="7" height="5" />
       <rect x="14" y="12" width="7" height="9" />
@@ -14,26 +14,26 @@ function DashboardIcon({ size = 20, active = false }) {
   );
 }
 
-function ProjectsIcon({ size = 20, active = false }) {
+function ProjectsIcon({ size = 20, active = false, color }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "#94a3b8"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || (active ? "#fff" : "#94a3b8")} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
   );
 }
 
-function TasksIcon({ size = 20, active = false }) {
+function TasksIcon({ size = 20, active = false, color }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "#94a3b8"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || (active ? "#fff" : "#94a3b8")} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="9 11 12 14 22 4" stroke="#10b981" />
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
   );
 }
 
-function SearchIcon({ size = 18 }) {
+function SearchIcon({ size = 18, color }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "#94a3b8"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -1049,138 +1049,76 @@ Project Image Data: ${projImageBase64 || ""}
         </div>
       )}
 
-      {/* ── View B: NEW ADMIN DASHBOARD VIEW ───────────────────────────────── */}
+      {/* ── View B: NEW DEVELOPER TOP-NAVBAR VIEW ─────────────────────────── */}
       {view === "dashboard" && (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", color: "#1e293b" }}>
+        <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", color: "#1e293b" }}>
           
-          <aside style={{ width: 260, background: "#0b1224", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-            <div style={{ padding: "28px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #1e293b" }}>
-              <svg width="40" height="24" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Sleek V */}
-                <path d="M10 5 L28 45 L46 5" stroke="#00a8e8" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-                {/* Sleek A */}
-                <path d="M54 45 L72 5 L90 45" stroke="#00a8e8" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Top slim navigation bar in #00A2E8 */}
+          <header style={{
+            height: 56, background: "#00A2E8", display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0 24px", position: "sticky", top: 0, zIndex: 1000, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", color: "#fff"
+          }}>
+            {/* Left side: Logo & Title */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <svg width="34" height="20" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* White Logo VA path */}
+                <path d="M10 5 L28 45 L46 5" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M54 45 L72 5 L90 45" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div>
-                <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 800, letterSpacing: 1.5, margin: 0 }}>TRESVANCE</h2>
-                <p style={{ color: "#64748b", fontSize: 10, letterSpacing: 0.5, margin: 0 }}>Developer Project Tracker</p>
+                <h2 style={{ color: "#fff", fontSize: 15, fontWeight: 900, letterSpacing: 1.2, margin: 0, lineHeight: 1.2 }}>TRESVANCE</h2>
+                <p style={{ color: "rgba(255, 255, 255, 0.75)", fontSize: 9, letterSpacing: 0.5, margin: 0 }}>Developer Project Tracker</p>
               </div>
             </div>
 
-            <nav style={{ flex: 1, padding: "24px 16px" }}>
-              <ul style={{ listStyle: "none" }}>
-                <li style={{ marginBottom: 8 }}>
-                  <button onClick={() => setActiveTab("dashboard")}
+            {/* Middle: Horizontal Nav tabs */}
+            <nav style={{ display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
+              {[
+                { tab: "dashboard", label: "Dashboard", icon: <DashboardIcon active={activeTab === "dashboard"} color={activeTab === "dashboard" ? "#00A2E8" : "#fff"} /> },
+                { tab: "projects", label: "Projects", icon: <ProjectsIcon active={activeTab === "projects" || activeTab === "add_project"} color={activeTab === "projects" || activeTab === "add_project" ? "#00A2E8" : "#fff"} /> },
+                { tab: "tasks", label: "Tasks", icon: <TasksIcon active={activeTab === "tasks"} color={activeTab === "tasks" ? "#00A2E8" : "#fff"} /> }
+              ].map((item) => {
+                const isActive = activeTab === item.tab || (item.tab === "projects" && activeTab === "add_project");
+                return (
+                  <button key={item.tab} onClick={() => setActiveTab(item.tab)}
                     style={{
-                      width: "100%", border: "none", outline: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
-                      fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "dashboard" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
-                      color: activeTab === "dashboard" ? "#fff" : "#94a3b8"
-                    }}>
-                    <DashboardIcon active={activeTab === "dashboard"} />
-                    Dashboard
-                  </button>
-                </li>
-                <li style={{ marginBottom: 8 }}>
-                  <button onClick={() => setActiveTab("projects")}
-                    style={{
-                      width: "100%", border: "none", outline: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
-                      fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "projects" || activeTab === "add_project" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
-                      color: activeTab === "projects" || activeTab === "add_project" ? "#fff" : "#94a3b8"
-                    }}>
-                    <ProjectsIcon active={activeTab === "projects" || activeTab === "add_project"} />
-                    Projects
-                  </button>
-                </li>
-                <li style={{ marginBottom: 8 }}>
-                  <button onClick={() => setActiveTab("tasks")}
-                    style={{
-                      width: "100%", border: "none", outline: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
-                      fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: activeTab === "tasks" ? "linear-gradient(135deg, #00a2e8, #29ABE2)" : "transparent",
-                      color: activeTab === "tasks" ? "#fff" : "#94a3b8"
-                    }}>
-                    <TasksIcon active={activeTab === "tasks"} />
-                    Tasks
-                  </button>
-                </li>
-
-                <li style={{ marginTop: 24, borderTop: "1px solid #1e293b", paddingTop: 16 }}>
-                  <button onClick={() => {
-                    setView("portal");
-                    localStorage.setItem("app_view", "portal");
-                  }}
-                    style={{
-                      width: "100%", border: "none", outline: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
-                      fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: "transparent", color: "#94a3b8"
+                      border: "none", outline: "none", cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 6,
+                      fontSize: 13, fontWeight: 700, transition: "all .15s",
+                      background: isActive ? "#ffffff" : "transparent",
+                      color: isActive ? "#00A2E8" : "#ffffff"
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#1e293b"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                    🏠 Client Portal
+                    onMouseEnter={e => { if(!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                    onMouseLeave={e => { if(!isActive) e.currentTarget.style.background = "transparent"; }}>
+                    {item.icon}
+                    {item.label}
                   </button>
-                </li>
-
-                <li style={{ marginTop: 8 }}>
-                  <button onClick={handleLogout}
-                    style={{
-                      width: "100%", border: "none", outline: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 8,
-                      fontSize: 14, fontWeight: 600, transition: "all .15s",
-                      background: "transparent", color: "#f87171"
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#7f1d1d"; e.currentTarget.style.color = "#fca5a5"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#f87171"; }}>
-                    🚪 Logout
-                  </button>
-                </li>
-              </ul>
+                );
+              })}
             </nav>
 
-            <div style={{ padding: 20, borderTop: "1px solid #1e293b", display: "flex", alignItems: "center", gap: 12 }}>
-              <UserAvatar name={localStorage.getItem("admin_logged_in_name") || "Developer"} size={38} />
-              <div>
-                <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{localStorage.getItem("admin_logged_in_name") || "Developer"}</div>
-                <div style={{ color: "#64748b", fontSize: 11 }}>Developer</div>
+            {/* Right: profile, logout */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={handleLogout}
+                style={{
+                  border: "none", background: "transparent", color: "#ffe4e6",
+                  fontSize: 11, fontWeight: 700, cursor: "pointer"
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "#f43f5e"}
+                onMouseLeave={e => e.currentTarget.style.color = "#ffe4e6"}>
+                🚪 Logout
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid rgba(255, 255, 255, 0.2)", paddingLeft: 12 }}>
+                <UserAvatar name={localStorage.getItem("admin_logged_in_name") || "Developer"} size={26} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {localStorage.getItem("admin_logged_in_name") || "Dev"}
+                </span>
               </div>
             </div>
-          </aside>
+          </header>
 
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-            <header style={{ height: 68, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", position: "sticky", top: 0, zIndex: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, maxWidth: 400 }}>
-                <SearchIcon />
-                <input type="text"
-                  placeholder="Search projects, tasks, users..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: 14, width: "100%", color: "#1e293b" }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Tresvance Solutions</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                </div>
-
-                <a href="/admin/" target="_blank" rel="noopener noreferrer"
-                  style={{
-                    textDecoration: "none", background: "linear-gradient(135deg, #1e293b, #0f172a)", color: "#fff",
-                    padding: "8px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, border: "1px solid #1e293b", transition: "opacity 0.2s"
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
-                  onMouseLeave={e => e.currentTarget.style.opacity = 1}>
-                  🎛️ Django Admin
-                </a>
-              </div>
-            </header>
-
             <main style={{ flex: 1, padding: "32px 32px 64px", overflowY: "auto" }}>
               
               {/* Tab 1: Dashboard */}
