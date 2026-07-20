@@ -170,6 +170,10 @@ export default function App() {
 
   const [formSuccessMessage, setFormSuccessMessage] = useState("");
   const [formErrorMessage, setFormErrorMessage] = useState("");
+  const [remarksModalText, setRemarksModalText] = useState(null);
+  const [projImageName, setProjImageName] = useState("");
+  const [projImageBase64, setProjImageBase64] = useState("");
+  const [taskAttachments, setTaskAttachments] = useState([]);
 
   const refreshData = () => {
     setLoading(true);
@@ -373,6 +377,7 @@ export default function App() {
     setTaskStatus("To Do");
     setTaskTags([]);
     setTaskTagInput("");
+    setTaskAttachments([]);
     setTaskEditingId(null);
   };
 
@@ -405,7 +410,8 @@ export default function App() {
       due_date: taskDueDate || new Date().toISOString().split("T")[0],
       estimated_hours: parseFloat(taskEstHours) || 0,
       status: taskStatus,
-      tags: taskTags
+      tags: taskTags,
+      attachments: taskAttachments
     };
 
     const url = taskEditingId ? `/api/tasks/${taskEditingId}/` : "/api/tasks/";
@@ -445,6 +451,8 @@ export default function App() {
     setProjDepartment("Select Department");
     setProjTags([]);
     setSelectedMembers([]);
+    setProjImageName("");
+    setProjImageBase64("");
     setIsEditingProject(false);
     setProjectEditingId(null);
   };
@@ -478,6 +486,8 @@ export default function App() {
     setProjTags(details.tags);
     setSelectedMembers(details.members);
     setProjUrl(project.url || "");
+    setProjImageName(details.imageName || "");
+    setProjImageBase64(details.imageBase64 || "");
 
     setIsEditingProject(true);
     setProjectEditingId(project.id);
@@ -732,7 +742,9 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
       tags: [],
       members: [],
       currentStage: "Project Created",
-      description: ""
+      description: "",
+      imageName: "",
+      imageBase64: ""
     };
 
     if (!remarks) return result;
@@ -761,6 +773,10 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
     if (estHoursMatch) result.estimatedHours = estHoursMatch[1].replace(/hrs|hr/gi, "").trim();
     if (deptMatch) result.department = deptMatch[1].trim();
     if (stageMatch) result.currentStage = stageMatch[1].trim();
+    const imageMatch = remarks.match(/Project Image:\s*(.*)/i);
+    const base64Match = remarks.match(/Project Image Data:\s*(.*)/i);
+    if (imageMatch) result.imageName = imageMatch[1].trim();
+    if (base64Match) result.imageBase64 = base64Match[1].trim();
     if (tagsMatch && tagsMatch[1].trim()) {
       result.tags = tagsMatch[1].split(",").map(t => t.trim());
     }
@@ -786,7 +802,9 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
       !line.startsWith("Department:") &&
       !line.startsWith("Tags:") &&
       !line.startsWith("Current Stage:") &&
-      !line.startsWith("Members:")
+      !line.startsWith("Members:") &&
+      !line.startsWith("Project Image:") &&
+      !line.startsWith("Project Image Data:")
     );
     result.description = descriptionLines.join("\n").trim() || remarks;
 
@@ -826,6 +844,8 @@ Estimated Hours: ${projEstHours || "0"} hrs
 Department: ${projDepartment}
 Tags: ${projTags.join(", ") || "None"}
 Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
+Project Image: ${projImageName || "None"}
+Project Image Data: ${projImageBase64 || ""}
 `.trim();
 
     // Map priority or status back to DEV/PROD/MAINT
@@ -1020,7 +1040,22 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
 
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "flex-start" }}>
                         <span style={{ fontSize: 13, color: "#666", lineHeight: 1.5, wordBreak: "break-word" }}>
-                          {project.remarks || <span style={{ color: "#ddd" }}>—</span>}
+                          {(() => {
+                            const remText = project.remarks || "";
+                            const cleanText = remText.replace(/\r?\n/g, " ");
+                            if (cleanText.length > 50) {
+                              return (
+                                <span>
+                                  {cleanText.substring(0, 50)}...{" "}
+                                  <button onClick={() => setRemarksModalText(project.remarks)}
+                                    style={{ background: "none", border: "none", color: "#00a2e8", padding: 0, fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
+                                    Read More
+                                  </button>
+                                </span>
+                              );
+                            }
+                            return cleanText || <span style={{ color: "#ddd" }}>—</span>;
+                          })()}
                         </span>
                       </div>
                     </div>
@@ -1050,7 +1085,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
               </svg>
               <div>
                 <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 800, letterSpacing: 1.5, margin: 0 }}>TRESVANCE</h2>
-                <p style={{ color: "#64748b", fontSize: 10, letterSpacing: 0.5, margin: 0 }}>Project Management Portal</p>
+                <p style={{ color: "#64748b", fontSize: 10, letterSpacing: 0.5, margin: 0 }}>Developer Project Tracker</p>
               </div>
             </div>
 
@@ -1123,17 +1158,17 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                     }}
                     onMouseEnter={e => { e.currentTarget.style.background = "#7f1d1d"; e.currentTarget.style.color = "#fca5a5"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#f87171"; }}>
-                    🚪 Logout Admin
+                    🚪 Logout
                   </button>
                 </li>
               </ul>
             </nav>
 
             <div style={{ padding: 20, borderTop: "1px solid #1e293b", display: "flex", alignItems: "center", gap: 12 }}>
-              <UserAvatar name="Admin" size={38} />
+              <UserAvatar name={localStorage.getItem("admin_logged_in_name") || "Developer"} size={38} />
               <div>
-                <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>Admin</div>
-                <div style={{ color: "#64748b", fontSize: 11 }}>Admin</div>
+                <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{localStorage.getItem("admin_logged_in_name") || "Developer"}</div>
+                <div style={{ color: "#64748b", fontSize: 11 }}>Developer</div>
               </div>
             </div>
           </aside>
@@ -1163,7 +1198,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                   }}
                   onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
                   onMouseLeave={e => e.currentTarget.style.opacity = 1}>
-                  🎛️ Admin Panel
+                  🎛️ Django Admin
                 </a>
               </div>
             </header>
@@ -1176,7 +1211,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                     <div>
                       <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", margin: 0 }}>Dashboard</h1>
-                      <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>Welcome back, Admin! 👋</p>
+                      <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>Welcome back, {localStorage.getItem("admin_logged_in_name") || "Developer"}! 👋</p>
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
                       <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, padding: "10px 16px", fontSize: 13, fontWeight: 600, color: "#475569", display: "flex", alignItems: "center", gap: 8 }}>
@@ -2195,10 +2230,36 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       {/* Project Image Placeholder */}
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Project Image (Optional)</label>
-                        <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "20px", textAlign: "center", cursor: "pointer", background: "#f8fafc", transition: "border 0.2s" }}>
-                          <div style={{ fontSize: 24, color: "#94a3b8" }}>☁️</div>
-                          <div style={{ fontSize: 12, color: "#475569", fontWeight: 700, marginTop: 8 }}>Click to upload or drag and drop</div>
-                          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>PNG, JPG up to 5MB</div>
+                        <div style={{ position: "relative", border: "2px dashed #cbd5e1", borderRadius: 8, padding: "20px", textAlign: "center", cursor: "pointer", background: "#f8fafc", transition: "border 0.2s" }}>
+                          <input type="file" accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                setProjImageName(file.name);
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setProjImageBase64(reader.result);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} />
+                          {projImageBase64 ? (
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                              <img src={projImageBase64} alt="Preview" style={{ maxWidth: "100%", maxHeight: 100, borderRadius: 6, objectFit: "contain" }} />
+                              <div style={{ fontSize: 12, fontWeight: 700, color: "#00a2e8" }}>{projImageName}</div>
+                              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setProjImageName(""); setProjImageBase64(""); }}
+                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
+                                Remove Image
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 24, color: "#94a3b8" }}>☁️</div>
+                              <div style={{ fontSize: 12, color: "#475569", fontWeight: 700, marginTop: 8 }}>Click to upload or drag and drop</div>
+                              <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>PNG, JPG up to 5MB</div>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -2377,11 +2438,51 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                       {/* Attachments drag & drop placeholder */}
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Attachments (Optional)</label>
-                        <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px", textAlign: "center", cursor: "pointer", background: "#f8fafc" }}>
+                        <div style={{ position: "relative", border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px", textAlign: "center", cursor: "pointer", background: "#f8fafc" }}>
+                          <input type="file" multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files);
+                              files.forEach(file => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const newAtt = {
+                                    filename: file.name,
+                                    sizeBytes: file.size,
+                                    uploadedAt: new Date().toISOString(),
+                                    uploadedBy: localStorage.getItem("admin_logged_in_name") || "Developer",
+                                    data: reader.result
+                                  };
+                                  setTaskAttachments(prev => [...prev, newAtt]);
+                                };
+                                reader.readAsDataURL(file);
+                              });
+                            }}
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} />
                           <div style={{ fontSize: 24, color: "#94a3b8" }}>☁️</div>
                           <div style={{ fontSize: 12, color: "#475569", fontWeight: 700, marginTop: 8 }}>Drag & drop files here or <span style={{ color: "#00a2e8" }}>click to upload</span></div>
                           <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>Max file size: 20MB</div>
                         </div>
+
+                        {/* Staged attachments list */}
+                        {taskAttachments.length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                            {taskAttachments.map((file, idx) => (
+                              <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 14 }}>📄</span>
+                                  <div style={{ textAlign: "left" }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{file.filename}</div>
+                                    <div style={{ fontSize: 9, color: "#94a3b8" }}>{(file.sizeBytes / 1024 / 1024).toFixed(1)} MB</div>
+                                  </div>
+                                </div>
+                                <button type="button" onClick={() => setTaskAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                  style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 12 }}>
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                     </div>
@@ -3057,6 +3158,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                           setTaskEstHours(String(selectedTask.estimated_hours || ""));
                           setTaskStatus(selectedTask.status || "To Do");
                           setTaskTags(selectedTask.tags || []);
+                          setTaskAttachments(selectedTask.attachments || []);
                           
                           setTaskEditingId(selectedTask.id);
                           setActiveTab("add_task");
@@ -3328,8 +3430,8 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                 <span style={{ color: "#29ABE2", fontSize: 18, fontWeight: 700 }}>v</span>
                 <span style={{ color: "#fff", fontSize: 18, fontWeight: 300 }}>ance</span>
               </div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 6px 0" }}>Admin Authentication</h3>
-              <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>Enter login details to access PM Dashboard</p>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 6px 0" }}>Developer / Team Login</h3>
+              <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>Enter credentials to access Project Tracker</p>
             </div>
 
             {loginError && (
@@ -3347,7 +3449,7 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                 <input
                   type="email" required
                   value={username} onChange={e => setUsername(e.target.value)}
-                  placeholder="e.g. admin@tresvance.com"
+                  placeholder="e.g. developer@tresvance.com"
                   style={{
                     width: "100%", padding: "10px 14px", border: "1.5px solid #cbd5e1", borderRadius: 6,
                     fontSize: 13, outline: "none", boxSizing: "border-box"
@@ -3451,6 +3553,37 @@ Members: ${selectedMembers.map(m => `${m.name} (${m.role})`).join(", ")}
                   Add Member
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Remarks Modal Overlay */}
+      {remarksModalText && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          backgroundColor: "rgba(11, 18, 36, 0.75)", backdropFilter: "blur(6px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 12, width: "100%", maxWidth: 500,
+            padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+            border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: 16
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 12 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>Project Remarks / Metadata</h3>
+              <button onClick={() => setRemarksModalText(null)}
+                style={{ background: "none", border: "none", fontSize: 18, color: "#94a3b8", cursor: "pointer", fontWeight: 700 }}>
+                ×
+              </button>
+            </div>
+            <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6, whiteSpace: "pre-line", maxHeight: 300, overflowY: "auto", padding: "4px 0" }}>
+              {remarksModalText}
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: 12 }}>
+              <button onClick={() => setRemarksModalText(null)}
+                style={{ background: "#00a2e8", border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                Close Details
+              </button>
             </div>
           </div>
         </div>
