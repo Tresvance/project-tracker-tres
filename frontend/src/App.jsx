@@ -211,30 +211,6 @@ export default function App() {
           };
         });
 
-        if (cards.length === 0) {
-          let cardIdCounter = 1;
-          tsRes.data.forEach(ts => {
-            ts.tasks.forEach(task => {
-              const projectSlug = ts.project_name ? ts.project_name.substring(0, 3).toUpperCase() : "TS";
-              const cols = ["backlog", "todo", "inprogress", "testing", "completed"];
-              const col = cols[(task.id || cardIdCounter) % cols.length];
-
-              cards.push({
-                id: task.id || cardIdCounter,
-                code: `#${projectSlug}-${task.id || cardIdCounter}`,
-                title: task.description,
-                developer: ts.employee_name || "Unknown Dev",
-                project: ts.project_name || "Internal Project",
-                projectId: ts.project,
-                hours: parseFloat(task.hours) || 0,
-                amount: parseFloat(task.amount) || 0,
-                date: ts.date,
-                column: col
-              });
-              cardIdCounter++;
-            });
-          });
-        }
         setKanbanTasks(cards);
         setLoading(false);
       })
