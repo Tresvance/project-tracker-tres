@@ -17,3 +17,5 @@ venv
 # IDE
 .vscode/
 .idea/
+/project_tracker/home/migrations
+/migrations
