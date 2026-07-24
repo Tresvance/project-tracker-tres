@@ -566,7 +566,169 @@ input:checked + .switch-slider:before {{
 </div>
 <div class="sub">Showing {len(cards.strip()) and len(projects) or 0} project(s) with live and/or test deploy configured.</div>
 <div class="grid">{cards}</div>
+
+<!-- Deployment Configuration Modal -->
+<div id="deployModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">Configure Deployment</h2>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="deployForm" onsubmit="submitDeployment(event)">
+        <input type="hidden" id="modalProjectId" value="">
+        <input type="hidden" id="modalTarget" value="">
+        
+        <div class="form-group">
+          <label for="branchSelect">Branch to Deploy</label>
+          <div id="branchContainer">
+            <select id="branchSelect" name="branch" class="form-control">
+              <option value="main">main</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Services to Build</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="services" value="4" checked>
+              <span>web + admin (Default)</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="services" value="5">
+              <span>web + admin + studio (All)</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="services" value="1">
+              <span>web</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="services" value="2">
+              <span>admin</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="services" value="3">
+              <span>studio</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group toggle-group">
+          <label class="switch-label">
+            <input type="checkbox" id="runMigrations" name="run_migrations" value="y">
+            <span class="switch-slider"></span>
+          </label>
+          <span style="font-size:13px;font-weight:600;color:#e6edf3;">Run database migrations?</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Deploy Now</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openDeployModal(projectId, projectName, targetLabel) {{
+  const modal = document.getElementById('deployModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalProjectId = document.getElementById('modalProjectId');
+  const modalTarget = document.getElementById('modalTarget');
+  const branchContainer = document.getElementById('branchContainer');
+  
+  modalProjectId.value = projectId;
+  modalTarget.value = targetLabel;
+  modalTitle.textContent = 'Configure Deployment – ' + projectName + ' (' + targetLabel + ')';
+  
+  document.getElementById('runMigrations').checked = false;
+  const servicesRadios = document.getElementsByName('services');
+  for (let r of servicesRadios) {{
+    if (r.value === "4") r.checked = true;
+  }}
+  
+  branchContainer.innerHTML = `
+    <div style="background:#0d1117; border:1px solid #232b38; border-radius:6px; padding:10px 14px; color:#7d8590; font-size:14px; display:flex; align-items:center;">
+      <div class="loading-spinner"></div>
+      Fetching remote branches from VPS...
+    </div>
+  `;
+  
+  modal.style.display = 'flex';
+  setTimeout(() => {{ modal.classList.add('show'); }}, 10);
+  
+  fetch('/admin/home/project/' + projectId + '/fetch-branches/')
+    .then(response => {{
+      if (!response.ok) throw new Error('Failed to fetch branches');
+      return response.json();
+    }})
+    .then(data => {{
+      if (data.branches && data.branches.length > 0) {{
+        let selectHtml = '<select id="branchSelect" name="branch" class="form-control">';
+        data.branches.forEach(branch => {{
+          const selected = branch === 'main' ? 'selected' : '';
+          selectHtml += '<option value="' + branch + '" ' + selected + '>' + branch + '</option>';
+        }});
+        selectHtml += '</select>';
+        branchContainer.innerHTML = selectHtml;
+      }} else {{
+        throw new Error('No branches returned');
+      }}
+    }})
+    .catch(err => {{
+      console.error(err);
+      branchContainer.innerHTML = `
+        <div style="position:relative;">
+          <input type="text" id="branchSelect" name="branch" class="form-control" value="main" placeholder="Enter branch manually">
+          <div style="font-size:11px; color:#e2542f; margin-top:4px;">⚠️ Couldn't fetch branches. Please input manually.</div>
+        </div>
+      `;
+    }});
+}}
+
+function closeModal() {{
+  const modal = document.getElementById('deployModal');
+  modal.classList.remove('show');
+  setTimeout(() => {{ modal.style.display = 'none'; }}, 250);
+}}
+
+function submitDeployment(event) {{
+  event.preventDefault();
+  
+  const projectId = document.getElementById('modalProjectId').value;
+  const targetLabel = document.getElementById('modalTarget').value;
+  const branchEl = document.getElementById('branchSelect');
+  const branch = branchEl ? branchEl.value : 'main';
+  
+  const servicesRadios = document.getElementsByName('services');
+  let services = '4';
+  for (let r of servicesRadios) {{
+    if (r.checked) {{
+      services = r.value;
+      break;
+    }}
+  }}
+  
+  const runMigrationsCheckbox = document.getElementById('runMigrations');
+  const runMigrations = runMigrationsCheckbox.checked ? 'y' : 'n';
+  
+  closeModal();
+  
+  const baseUrl = targetLabel === 'Live Server' 
+    ? '/admin/home/project/' + projectId + '/deploy/' 
+    : '/admin/home/project/' + projectId + '/deploy-test/';
+    
+  const queryParams = '?branch=' + encodeURIComponent(branch) + 
+                      '&services=' + encodeURIComponent(services) + 
+                      '&run_migrations=' + encodeURIComponent(runMigrations);
+  
+  window.open(baseUrl + queryParams, '_blank');
+}}
+</script>
 </body></html>""")
+
 
     # ── Live Deploy ──────────────────────────────────────────────────────────
     # ── Live Deploy ──────────────────────────────────────────────────────────
