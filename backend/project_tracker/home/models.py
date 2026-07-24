@@ -14,6 +14,10 @@ class DeployScript(models.Model):
         max_length=500,
         help_text='Shell command to run, e.g. "bash /opt/Qpet/deploy_simple.sh"',
     )
+    interactive = models.BooleanField(
+        default=False,
+        help_text='Check if this script is interactive and requires parameters (branch, services, migrations) to be asked before executing.',
+    )
 
     def __str__(self):
         return self.label
@@ -37,6 +41,10 @@ class Project(models.Model):
         blank=True,
         help_text='Shell command to run on the VPS to deploy to the TEST server. '
                    'e.g. "cd /opt/Qpet-test && ./deploy_qpet_test.sh". Leave blank to hide the Test Deploy button.',
+    )
+    test_deploy_interactive = models.BooleanField(
+        default=False,
+        help_text='Check if the test deploy command is interactive and requires parameters (branch, services, migrations) to be asked.',
     )
 
     deploy_command = models.CharField(
