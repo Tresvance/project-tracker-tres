@@ -207,7 +207,6 @@ class ProjectAdmin(admin.ModelAdmin):
             path('<int:project_id>/deploy/status/', self.admin_site.admin_view(self.deploy_status), name='project_deploy_status'),
             path('<int:project_id>/deploy-test/', self.admin_site.admin_view(self.deploy_test_project), name='project_deploy_test'),
             path('<int:project_id>/deploy-test/status/', self.admin_site.admin_view(self.deploy_test_status), name='project_deploy_test_status'),
-            path('<int:project_id>/fetch-branches/', self.admin_site.admin_view(self.fetch_branches), name='project_fetch_branches'),
             path('deploy-center/', self.admin_site.admin_view(self.deploy_center), name='project_deploy_center'),
         ]
         return custom + urls
@@ -291,26 +290,26 @@ class ProjectAdmin(admin.ModelAdmin):
 
             live_block = ""
             if script:
-                escaped_name = p.name.replace("'", "\\'")
                 live_block = f"""
                 <div class="dc-script">
                     <span class="dc-label">Live Script</span>
                     <span class="dc-script-name">📜 {script.label}</span>
                     <code class="dc-cmd">{script.command}</code>
                 </div>
-                <button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Live Server')"
-                   class="dc-btn dc-btn-live" style="border:none; cursor:pointer; width:100%; display:block;">🚀 Deploy Live Server</button>"""
+                <a href="/admin/home/project/{p.pk}/deploy/" target="_blank"
+                   onclick="return confirm('Deploy {p.name} to LIVE? This will run \\'{script.label}\\' on the VPS.');"
+                   class="dc-btn dc-btn-live">🚀 Deploy Live Server</a>"""
 
             test_block = ""
             if p.test_deploy_command:
-                escaped_name = p.name.replace("'", "\\'")
                 test_block = f"""
                 <div class="dc-script">
                     <span class="dc-label">Test Command</span>
                     <code class="dc-cmd">{p.test_deploy_command}</code>
                 </div>
-                <button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Test Server')"
-                   class="dc-btn dc-btn-test" style="border:none; cursor:pointer; width:100%; display:block;">🧪 Deploy Test Server</button>"""
+                <a href="/admin/home/project/{p.pk}/deploy-test/" target="_blank"
+                   onclick="return confirm('Deploy {p.name} to TEST server?');"
+                   class="dc-btn dc-btn-test">🧪 Deploy Test Server</a>"""
 
             cards += f"""
             <div class="deploy-card">
@@ -356,207 +355,6 @@ body{{font-family:'DM Sans',sans-serif;background:#0b0e14;color:#e6edf3;min-heig
 .dc-btn-test{{background:#8a5cf6;color:#fff}}
 .dc-btn-test:hover{{background:#7444e0}}
 .dc-empty{{grid-column:1/-1;text-align:center;padding:60px 20px;color:#5c6773;font-size:14px;line-height:1.8}}
-
-/* Modal Overlay Styles */
-.modal-overlay {{
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(4px);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}}
-.modal-overlay.show {{
-  opacity: 1;
-}}
-.modal-content {{
-  background: #141a24;
-  border: 1px solid #232b38;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  overflow: hidden;
-  transform: translateY(20px);
-  transition: transform 0.25s ease;
-}}
-.modal-overlay.show .modal-content {{
-  transform: translateY(0);
-}}
-.modal-header {{
-  padding: 20px 24px;
-  border-bottom: 1px solid #1f2733;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}}
-.modal-header h2 {{
-  font-size: 17px;
-  font-weight: 700;
-  color: #fff;
-}}
-.close-btn {{
-  background: none;
-  border: none;
-  color: #7d8590;
-  font-size: 24px;
-  cursor: pointer;
-  line-height: 1;
-}}
-.close-btn:hover {{
-  color: #fff;
-}}
-.modal-body {{
-  padding: 24px;
-}}
-.form-group {{
-  margin-bottom: 20px;
-}}
-.form-group label {{
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #7d8590;
-  margin-bottom: 8px;
-}}
-.form-control {{
-  width: 100%;
-  background: #0d1117;
-  border: 1px solid #232b38;
-  border-radius: 6px;
-  color: #fff;
-  padding: 10px 14px;
-  font-size: 14px;
-  outline: none;
-  font-family: inherit;
-  transition: border-color 0.15s;
-}}
-.form-control:focus {{
-  border-color: #29ABE2;
-}}
-.radio-group {{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}}
-.radio-label {{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #0d1117;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid #232b38;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}}
-.radio-label:hover {{
-  border-color: #29ABE2;
-  background: #111722;
-}}
-.radio-label input[type="radio"] {{
-  accent-color: #29ABE2;
-  cursor: pointer;
-}}
-.radio-label span {{
-  font-size: 14px;
-  color: #e6edf3;
-}}
-/* Toggle Switch Styles */
-.toggle-group {{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}}
-.switch-label {{
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  margin-bottom: 0 !important;
-}}
-.switch-label input {{
-  opacity: 0;
-  width: 0;
-  height: 0;
-}}
-.switch-slider {{
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #232b38;
-  transition: .2s;
-  border-radius: 24px;
-}}
-.switch-slider:before {{
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: #7d8590;
-  transition: .2s;
-  border-radius: 50%;
-}}
-input:checked + .switch-slider {{
-  background-color: #29ABE2;
-}}
-input:checked + .switch-slider:before {{
-  transform: translateX(20px);
-  background-color: #fff;
-}}
-/* Button Styles */
-.modal-footer {{
-  margin-top: 28px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}}
-.btn {{
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: background 0.15s;
-}}
-.btn-secondary {{
-  background: #232b38;
-  color: #e6edf3;
-}}
-.btn-secondary:hover {{
-  background: #2f3b4c;
-}}
-.btn-primary {{
-  background: #29ABE2;
-  color: #fff;
-}}
-.btn-primary:hover {{
-  background: #1b8ebf;
-}}
-.loading-spinner {{
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255,255,255,0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: modal-spin 0.8s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
-}}
-@keyframes modal-spin {{
-  to {{ transform: rotate(360deg); }}
-}}
 </style>
 </head>
 <body>
@@ -569,7 +367,6 @@ input:checked + .switch-slider:before {{
 </body></html>""")
 
     # ── Live Deploy ──────────────────────────────────────────────────────────
-    # ── Live Deploy ──────────────────────────────────────────────────────────
     def deploy_project(self, request, project_id):
         try:
             project = Project.objects.get(pk=project_id)
@@ -580,16 +377,8 @@ input:checked + .switch-slider:before {{
         if not script:
             return HttpResponse("No deploy script selected for this project.", status=400)
 
-        branch = request.GET.get("branch", "main")
-        services_choice = request.GET.get("services", "4")
-        run_migrations = request.GET.get("run_migrations", "n")
-
         cache_key = f"deploy_status_{project_id}"
-        cache.set(cache_key, {
-            "status": "running", 
-            "started": dt.today().isoformat(),
-            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
-        }, timeout=900)
+        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
@@ -603,13 +392,6 @@ input:checked + .switch-slider:before {{
                     timeout=15,
                 )
                 stdin, stdout, stderr = client.exec_command(script.command, timeout=600)
-                
-                # Pipe responses into the interactive prompts of the deploy script
-                stdin.write(f"{branch}\n")
-                stdin.write(f"{services_choice}\n")
-                stdin.write(f"{run_migrations}\n")
-                stdin.flush()
-
                 output = stdout.read().decode(errors='replace')
                 error = stderr.read().decode(errors='replace')
                 exit_status = stdout.channel.recv_exit_status()
@@ -622,7 +404,6 @@ input:checked + .switch-slider:before {{
             cache.set(cache_key, {
                 "status": "done", "ok": ok, "output": output, "error": error,
                 "exit_status": exit_status, "command": script.command,
-                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
             }, timeout=900)
 
         threading.Thread(target=run_deploy, daemon=True).start()
@@ -636,10 +417,9 @@ input:checked + .switch-slider:before {{
         if not state or state.get("status") == "running":
             return HttpResponse(self._build_deploy_waiting(project, "Live Server"))
 
-        params = state.get("params", {})
         return HttpResponse(self._build_deploy_result(
             project, state["command"], state["output"], state["error"],
-            state["exit_status"], state["ok"], "Live Server", params
+            state["exit_status"], state["ok"], "Live Server"
         ))
 
     # ── Test Deploy ──────────────────────────────────────────────────────────
@@ -653,16 +433,8 @@ input:checked + .switch-slider:before {{
         if not command:
             return HttpResponse("No test deploy command set for this project.", status=400)
 
-        branch = request.GET.get("branch", "main")
-        services_choice = request.GET.get("services", "4")
-        run_migrations = request.GET.get("run_migrations", "n")
-
         cache_key = f"deploy_test_status_{project_id}"
-        cache.set(cache_key, {
-            "status": "running", 
-            "started": dt.today().isoformat(),
-            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
-        }, timeout=900)
+        cache.set(cache_key, {"status": "running", "started": dt.today().isoformat()}, timeout=900)
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
@@ -676,13 +448,6 @@ input:checked + .switch-slider:before {{
                     timeout=15,
                 )
                 stdin, stdout, stderr = client.exec_command(command, timeout=600)
-                
-                # Pipe responses into the interactive prompts of the deploy script
-                stdin.write(f"{branch}\n")
-                stdin.write(f"{services_choice}\n")
-                stdin.write(f"{run_migrations}\n")
-                stdin.flush()
-
                 output = stdout.read().decode(errors='replace')
                 error = stderr.read().decode(errors='replace')
                 exit_status = stdout.channel.recv_exit_status()
@@ -695,7 +460,6 @@ input:checked + .switch-slider:before {{
             cache.set(cache_key, {
                 "status": "done", "ok": ok, "output": output, "error": error,
                 "exit_status": exit_status, "command": command,
-                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
             }, timeout=900)
 
         threading.Thread(target=run_deploy, daemon=True).start()
@@ -709,10 +473,9 @@ input:checked + .switch-slider:before {{
         if not state or state.get("status") == "running":
             return HttpResponse(self._build_deploy_waiting(project, "Test Server"))
 
-        params = state.get("params", {})
         return HttpResponse(self._build_deploy_result(
             project, state["command"], state["output"], state["error"],
-            state["exit_status"], state["ok"], "Test Server", params
+            state["exit_status"], state["ok"], "Test Server"
         ))
 
     def _build_deploy_waiting(self, project, target_label):
@@ -759,89 +522,10 @@ setInterval(() => {{
 </script>
 </body></html>"""
 
-    # ── Fetch Remote Git Branches (AJAX endpoint) ─────────────────────────────
-    def fetch_branches(self, request, project_id):
-        from django.http import JsonResponse
-        try:
-            project = Project.objects.get(pk=project_id)
-        except Project.DoesNotExist:
-            return JsonResponse({"error": "Project not found"}, status=404)
-
-        cmd = ""
-        if project.active_deploy_script:
-            cmd = project.active_deploy_script.command
-        elif project.test_deploy_command:
-            cmd = project.test_deploy_command
-
-        import re
-        repo_dir = "/opt/Qpet"
-        match = re.search(r'cd\s+([^\s;&]+)', cmd)
-        if match:
-            repo_dir = match.group(1).strip('"\'')
-        else:
-            match = re.search(r'(?:bash\s+)?(/opt/[a-zA-Z0-9_-]+)', cmd)
-            if match:
-                repo_dir = match.group(1)
-
-        try:
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(
-                hostname=settings.DEPLOY_SSH_HOST,
-                username=settings.DEPLOY_SSH_USER,
-                key_filename=settings.DEPLOY_SSH_KEY_PATH,
-                timeout=15,
-            )
-            ssh_cmd = f"cd {repo_dir} && git fetch origin && git branch -r"
-            stdin, stdout, stderr = client.exec_command(ssh_cmd, timeout=30)
-            output = stdout.read().decode(errors='replace')
-            error = stderr.read().decode(errors='replace')
-            exit_status = stdout.channel.recv_exit_status()
-            client.close()
-
-            if exit_status != 0:
-                return JsonResponse({"error": f"Git command failed: {error}"}, status=500)
-
-            branches = []
-            for line in output.splitlines():
-                line = line.strip()
-                if not line or "->" in line:
-                    continue
-                if line.startswith("origin/"):
-                    line = line[len("origin/"):]
-                if line not in branches:
-                    branches.append(line)
-
-            if not branches:
-                branches = ["main"]
-
-            return JsonResponse({"branches": branches})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-    def _build_deploy_result(self, project, command, output, error, exit_status, ok, target_label, params=None):
+    def _build_deploy_result(self, project, command, output, error, exit_status, ok, target_label):
         generated = dt.today().strftime("%d %B %Y, %I:%M %p")
         status_color = "#1a6b3a" if ok else "#c0392b"
         status_text = "✅ Deploy Succeeded" if ok else "❌ Deploy Failed"
-
-        params_block = ""
-        if params:
-            service_mapping = {
-                "1": "web",
-                "2": "admin",
-                "3": "studio",
-                "4": "web + admin",
-                "5": "web + admin + studio (all)"
-            }
-            service_label = service_mapping.get(params.get("services", "4"), "web + admin")
-            migrations_label = "Yes" if params.get("run_migrations") == "y" else "No"
-            
-            params_block = f"""
-            <div class="params-box" style="margin:0 40px 20px; background:#fff; padding:16px 22px; border-radius:6px; border:1px solid #e2e8f0; display:flex; gap:40px; font-size:13px; color:#333; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div><strong>Branch:</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-family:\'JetBrains Mono\',monospace;">{params.get('branch', 'main')}</code></div>
-                <div><strong>Services:</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-family:\'JetBrains Mono\',monospace;">{service_label}</code></div>
-                <div><strong>Migrations:</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-family:\'JetBrains Mono\',monospace;">{migrations_label}</code></div>
-            </div>"""
 
         return f"""<!DOCTYPE html>
 <html>
@@ -854,7 +538,7 @@ setInterval(() => {{
 body{{font-family:'DM Sans',sans-serif;background:#f7f9fb;color:#111}}
 .bar{{background:#111;padding:16px 40px;display:flex;justify-content:space-between;align-items:center}}
 .bar h1{{color:#fff;font-size:15px}}
-.status{{margin:24px 40px 16px;padding:16px 22px;border-radius:6px;background:{status_color};color:#fff;font-weight:700;font-size:15px;display:flex;justify-content:space-between}}
+.status{{margin:24px 40px;padding:16px 22px;border-radius:6px;background:{status_color};color:#fff;font-weight:700;font-size:15px;display:flex;justify-content:space-between}}
 .meta{{margin:0 40px 20px;font-size:12px;color:#888}}
 .log-box{{margin:0 40px 40px;background:#0d1117;border-radius:6px;overflow:hidden}}
 .log-head{{background:#161b22;padding:8px 16px;font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;font-weight:700}}
@@ -865,7 +549,6 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
 <body>
 <div class="bar"><h1>🚀 Deploy Report — {project.name} ({target_label})</h1></div>
 <div class="status"><span>{status_text}</span><span>Exit code: {exit_status if exit_status is not None else "N/A"}</span></div>
-{params_block}
 <div class="meta">Command: <code>{command}</code> &nbsp;·&nbsp; Run: {generated}</div>
 <div class="log-box">
   <div class="log-head">stdout</div>
@@ -876,7 +559,6 @@ pre{{padding:18px;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size
   <pre>{error or '(no errors)'}</pre>
 </div>
 </body></html>"""
-
 
     def monthly_report(self, request, project_id):
         try:
