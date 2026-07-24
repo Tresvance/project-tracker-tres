@@ -17,7 +17,7 @@ from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount
 class DeployScriptInline(admin.TabularInline):
     model = DeployScript
     extra = 1
-    fields = ('label', 'command', 'interactive')
+    fields = ('label', 'command')
 
 
 # ── Custom form to render active_deploy_script as radio buttons ───────────────
@@ -63,7 +63,7 @@ class ProjectAdmin(admin.ModelAdmin):
             'description': '🚀 Add live deploy scripts below (save first if this is a new project), then pick which one runs. Go to the Deploy Center (button on project list) to actually run deploys.'
         }),
         ('Test Server Deployment', {
-            'fields': ('test_deploy_command', 'test_deploy_interactive'),
+            'fields': ('test_deploy_command',),
             'description': '🧪 Single command for deploying to the TEST server. No multiple scripts — just one command.'
         }),
     )
@@ -292,39 +292,25 @@ class ProjectAdmin(admin.ModelAdmin):
             live_block = ""
             if script:
                 escaped_name = p.name.replace("'", "\\'")
-                if script.interactive:
-                    live_btn = f"""<button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Live Server')"
-                       class="dc-btn dc-btn-live" style="border:none; cursor:pointer; width:100%; display:block;">🚀 Deploy Live Server</button>"""
-                else:
-                    live_btn = f"""<a href="/admin/home/project/{p.pk}/deploy/" target="_blank"
-                       onclick="return confirm('Deploy {escaped_name} to LIVE? This will run \\'{script.label}\\' on the VPS.');"
-                       class="dc-btn dc-btn-live" style="width:100%; display:block;">🚀 Deploy Live Server</a>"""
-
                 live_block = f"""
                 <div class="dc-script">
                     <span class="dc-label">Live Script</span>
                     <span class="dc-script-name">📜 {script.label}</span>
                     <code class="dc-cmd">{script.command}</code>
                 </div>
-                {live_btn}"""
+                <button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Live Server')"
+                   class="dc-btn dc-btn-live" style="border:none; cursor:pointer; width:100%; display:block;">🚀 Deploy Live Server</button>"""
 
             test_block = ""
             if p.test_deploy_command:
                 escaped_name = p.name.replace("'", "\\'")
-                if p.test_deploy_interactive:
-                    test_btn = f"""<button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Test Server')"
-                       class="dc-btn dc-btn-test" style="border:none; cursor:pointer; width:100%; display:block;">🧪 Deploy Test Server</button>"""
-                else:
-                    test_btn = f"""<a href="/admin/home/project/{p.pk}/deploy-test/" target="_blank"
-                       onclick="return confirm('Deploy {escaped_name} to TEST server?');"
-                       class="dc-btn dc-btn-test" style="width:100%; display:block;">🧪 Deploy Test Server</a>"""
-
                 test_block = f"""
                 <div class="dc-script">
                     <span class="dc-label">Test Command</span>
                     <code class="dc-cmd">{p.test_deploy_command}</code>
                 </div>
-                {test_btn}"""
+                <button onclick="openDeployModal({p.pk}, '{escaped_name}', 'Test Server')"
+                   class="dc-btn dc-btn-test" style="border:none; cursor:pointer; width:100%; display:block;">🧪 Deploy Test Server</button>"""
 
             cards += f"""
             <div class="deploy-card">
@@ -759,19 +745,17 @@ function submitDeployment(event) {{
         branch = request.GET.get("branch", "main")
         services_choice = request.GET.get("services", "4")
         run_migrations = request.GET.get("run_migrations", "n")
-        is_interactive = "branch" in request.GET
 
         cache_key = f"deploy_status_{project_id}"
         cache.set(cache_key, {
             "status": "running", 
             "started": dt.today().isoformat(),
-            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations, "is_interactive": is_interactive}
+            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
         }, timeout=900)
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
             try:
-                env_prefix = "export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/root/.local/share/pnpm:/root/.npm-global/bin; [ -f ~/.bashrc ] && . ~/.bashrc; [ -f ~/.profile ] && . ~/.profile; [ -f /etc/profile ] && . /etc/profile; "
                 client = paramiko.SSHClient()
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
@@ -780,7 +764,7 @@ function submitDeployment(event) {{
                     key_filename=settings.DEPLOY_SSH_KEY_PATH,
                     timeout=15,
                 )
-                stdin, stdout, stderr = client.exec_command(env_prefix + script.command, timeout=600)
+                stdin, stdout, stderr = client.exec_command(script.command, timeout=600)
                 
                 # Pipe responses into the interactive prompts of the deploy script
                 stdin.write(f"{branch}\n")
@@ -800,7 +784,7 @@ function submitDeployment(event) {{
             cache.set(cache_key, {
                 "status": "done", "ok": ok, "output": output, "error": error,
                 "exit_status": exit_status, "command": script.command,
-                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations, "is_interactive": is_interactive}
+                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
             }, timeout=900)
 
         threading.Thread(target=run_deploy, daemon=True).start()
@@ -834,19 +818,17 @@ function submitDeployment(event) {{
         branch = request.GET.get("branch", "main")
         services_choice = request.GET.get("services", "4")
         run_migrations = request.GET.get("run_migrations", "n")
-        is_interactive = "branch" in request.GET
 
         cache_key = f"deploy_test_status_{project_id}"
         cache.set(cache_key, {
             "status": "running", 
             "started": dt.today().isoformat(),
-            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations, "is_interactive": is_interactive}
+            "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
         }, timeout=900)
 
         def run_deploy():
             output, error, exit_status, ok = "", "", None, False
             try:
-                env_prefix = "export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/root/.local/share/pnpm:/root/.npm-global/bin; [ -f ~/.bashrc ] && . ~/.bashrc; [ -f ~/.profile ] && . ~/.profile; [ -f /etc/profile ] && . /etc/profile; "
                 client = paramiko.SSHClient()
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
@@ -855,7 +837,7 @@ function submitDeployment(event) {{
                     key_filename=settings.DEPLOY_SSH_KEY_PATH,
                     timeout=15,
                 )
-                stdin, stdout, stderr = client.exec_command(env_prefix + command, timeout=600)
+                stdin, stdout, stderr = client.exec_command(command, timeout=600)
                 
                 # Pipe responses into the interactive prompts of the deploy script
                 stdin.write(f"{branch}\n")
@@ -875,7 +857,7 @@ function submitDeployment(event) {{
             cache.set(cache_key, {
                 "status": "done", "ok": ok, "output": output, "error": error,
                 "exit_status": exit_status, "command": command,
-                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations, "is_interactive": is_interactive}
+                "params": {"branch": branch, "services": services_choice, "run_migrations": run_migrations}
             }, timeout=900)
 
         threading.Thread(target=run_deploy, daemon=True).start()
@@ -972,9 +954,8 @@ setInterval(() => {{
                 key_filename=settings.DEPLOY_SSH_KEY_PATH,
                 timeout=15,
             )
-            env_prefix = "export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/root/.local/share/pnpm:/root/.npm-global/bin; [ -f ~/.bashrc ] && . ~/.bashrc; [ -f ~/.profile ] && . ~/.profile; [ -f /etc/profile ] && . /etc/profile; "
             ssh_cmd = f"cd {repo_dir} && git fetch origin && git branch -r"
-            stdin, stdout, stderr = client.exec_command(env_prefix + ssh_cmd, timeout=30)
+            stdin, stdout, stderr = client.exec_command(ssh_cmd, timeout=30)
             output = stdout.read().decode(errors='replace')
             error = stderr.read().decode(errors='replace')
             exit_status = stdout.channel.recv_exit_status()
@@ -1006,7 +987,7 @@ setInterval(() => {{
         status_text = "✅ Deploy Succeeded" if ok else "❌ Deploy Failed"
 
         params_block = ""
-        if params and params.get("is_interactive"):
+        if params:
             service_mapping = {
                 "1": "web",
                 "2": "admin",
