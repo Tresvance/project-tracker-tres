@@ -10,7 +10,7 @@ from datetime import date as dt, timedelta
 import paramiko
 import threading
 from django.core.cache import cache
-from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task
+from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task, ChangeRequest
 
 
 # ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
@@ -203,6 +203,7 @@ class ProjectAdmin(admin.ModelAdmin):
         custom = [
             path('<int:project_id>/report/monthly/', self.admin_site.admin_view(self.monthly_report), name='project_monthly_report'),
             path('<int:project_id>/report/all/', self.admin_site.admin_view(self.all_report), name='project_all_report'),
+            path('<int:project_id>/report/change-requests/', self.admin_site.admin_view(self.project_change_requests_report), name='project_change_requests_report'),
             path('<int:project_id>/deploy/', self.admin_site.admin_view(self.deploy_project), name='project_deploy'),
             path('<int:project_id>/deploy/status/', self.admin_site.admin_view(self.deploy_status), name='project_deploy_status'),
             path('<int:project_id>/deploy-test/', self.admin_site.admin_view(self.deploy_test_project), name='project_deploy_test'),
@@ -210,6 +211,7 @@ class ProjectAdmin(admin.ModelAdmin):
             path('deploy-center/', self.admin_site.admin_view(self.deploy_center), name='project_deploy_center'),
         ]
         return custom + urls
+
 
     def hourly_rate_display(self, obj):
         return format_html('<strong style="color:#1a6b3a;">₹{}/hr</strong>', obj.hourly_rate)
@@ -270,10 +272,12 @@ class ProjectAdmin(admin.ModelAdmin):
             '{}'
             '</select>'
             '<a href="{}/report/all/" target="_blank" style="background:#111;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;height:24px;line-height:16px;display:flex;align-items:center;">📋 All</a>'
+            '<a href="{}/report/change-requests/" target="_blank" style="background:#29ABE2;color:#fff;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;height:24px;line-height:16px;display:flex;align-items:center;">📝 CR Report</a>'
             '</div>',
-            mark_safe(options_str), obj.pk
+            mark_safe(options_str), obj.pk, obj.pk
         )
     report_buttons.short_description = 'Reports'
+
 
     # ── Deploy Center (standalone dashboard page) ──────────────────────────────
     def deploy_center(self, request):
@@ -658,6 +662,172 @@ p{{font-size:13px;color:#888;margin-bottom:24px;text-align:center}}
         label = "All Timesheets"
         return HttpResponse(self._build_report(project, timesheets, label, "Project Timesheet Report"))
 
+    def project_change_requests_report(self, request, project_id):
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found.", status=404)
+
+        change_requests = ChangeRequest.objects.filter(project=project).order_by('-request_date', '-id')
+        generated = dt.today().strftime("%d %b %Y")
+
+        total_crs = change_requests.count()
+        total_hours = sum(cr.estimated_hours for cr in change_requests if cr.estimated_hours)
+
+        rows_html = ""
+        for index, cr in enumerate(change_requests, start=1):
+            target_date_str = cr.target_completion_date.strftime("%d %b %Y") if cr.target_completion_date else "—"
+            req_date_str = cr.request_date.strftime("%d %b %Y") if cr.request_date else "—"
+            ref_id = f"TRES-CR-{cr.id:04d}"
+            est_h_str = f"{cr.estimated_hours} hrs" if cr.estimated_hours else "—"
+
+            rows_html += f"""
+            <tr style="background:#fff">
+                <td style="padding:10px 16px;font-size:12px;color:#aaa;font-weight:700">{str(index).zfill(2)}</td>
+                <td style="padding:10px 16px;font-size:12px;font-weight:700;color:#29ABE2">{ref_id}</td>
+                <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#111">{cr.title}</td>
+                <td style="padding:10px 16px;font-size:13px;color:#555">{cr.client_name}<br><small style="color:#aaa">{cr.requested_by_contact or ''}</small></td>
+                <td style="padding:10px 16px;font-size:13px;color:#555">{req_date_str}</td>
+                <td style="padding:10px 16px;font-size:13px;color:#555">{cr.assigned_developer or 'Unassigned'}</td>
+                <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:700;color:#29ABE2">{est_h_str}</td>
+                <td style="padding:10px 16px;font-size:13px;color:#555">{target_date_str}</td>
+                <td style="padding:10px 16px;text-align:center">
+                    <a href="/admin/home/changerequest/{cr.id}/report/" target="_blank"
+                       style="background:#29ABE2;color:#fff;text-decoration:none;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;display:inline-block">
+                       Client Report
+                    </a>
+                </td>
+            </tr>"""
+
+        if not rows_html:
+            rows_html = '<tr><td colspan="9" style="padding:32px;text-align:center;color:#ccc;font-size:14px">No change requests recorded for this project yet.</td></tr>'
+
+        total_hours_fmt = f"{total_hours} hrs" if total_hours else "0 hrs"
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Change Requests Summary Report – {project.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'DM Sans',sans-serif;background:#fff;color:#111;font-size:14px;line-height:1.6}}
+.printbar{{background:#111;padding:11px 40px;display:flex;justify-content:space-between;align-items:center}}
+.printbar span{{font-size:12px;color:#666}}
+.printbar button{{background:#29ABE2;color:#fff;border:none;padding:8px 22px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}}
+.doc-header{{padding:28px 40px 24px;display:flex;justify-content:space-between;align-items:flex-start;position:relative;border-bottom:3px solid #29ABE2}}
+.logo-text{{font-size:36px;font-weight:800;letter-spacing:2px;line-height:1;color:#111;text-transform:uppercase;position:relative;z-index:2}}
+.logo-text .v{{color:#29ABE2}}
+.logo-sub{{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:#aaa;margin-top:2px;position:relative;z-index:2}}
+.logo-addr{{font-size:11px;color:#999;margin-top:8px;line-height:1.6;position:relative;z-index:2}}
+.doc-info{{text-align:right;position:relative;z-index:2;background:#fff;padding-left:20px}}
+.doc-info h2{{font-size:16px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:1px}}
+.doc-info p{{font-size:11px;color:#aaa;margin-top:3px}}
+.period-bar{{background:#29ABE2;padding:10px 40px;display:flex;justify-content:space-between;align-items:center}}
+.period-bar span{{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px}}
+.meta{{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:2px solid #f0f5f8}}
+.mc{{padding:16px 24px;border-right:1px solid #f0f5f8}}
+.mc:last-child{{border-right:none}}
+.ml{{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#aaa;margin-bottom:4px;font-weight:600}}
+.mv{{font-size:14px;font-weight:700;color:#111}}
+.sec{{background:#111;margin:28px 40px 0;padding:10px 18px;display:flex;justify-content:space-between;border-radius:5px 5px 0 0}}
+.sec span{{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:2px}}
+.sec small{{font-size:11px;color:#555}}
+table{{width:calc(100% - 80px);margin:0 40px;border-collapse:collapse;border:1px solid #e8f0f5;border-top:none}}
+thead tr{{background:#f0f7fa}}
+thead th{{padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:#777;border-bottom:2px solid #29ABE2}}
+th.r{{text-align:right}}
+th.c{{text-align:center}}
+tr{{border-bottom:1px solid #f0f5f8}}
+.total-bar{{margin:0 40px 40px;background:#f8fafc;color:#111;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border:1px solid #e8f0f5;border-top:none;border-radius:0 0 5px 5px}}
+@media print {{
+  @page {{ size: auto; margin: 10mm 15mm; }}
+  body {{ background: #fff; }}
+  .printbar {{ display: none !important; }}
+}}
+
+</style>
+</head>
+<body>
+<div class="printbar">
+    <span>System-generated Change Requests Summary Report &nbsp;·&nbsp; {project.name}</span>
+    <button onclick="window.print()">Print / Download PDF</button>
+</div>
+
+<div class="doc-header">
+    <div>
+        <div class="logo-text">TRES<span class="v">V</span>ANCE</div>
+        <div class="logo-sub">SOFTWARES</div>
+        <div class="logo-addr">Tresvance Softwares &nbsp;·&nbsp; Project Management Division</div>
+    </div>
+    <div class="doc-info">
+        <h2>CHANGE REQUESTS SUMMARY REPORT</h2>
+        <p>Project: <strong>{project.name}</strong> &nbsp;·&nbsp; Date: <strong>{generated}</strong></p>
+    </div>
+</div>
+
+<div class="period-bar">
+    <span>PROJECT CHANGE REQUESTS SUMMARY &nbsp;·&nbsp; {project.name}</span>
+    <span>{generated}</span>
+</div>
+
+<div class="meta">
+    <div class="mc">
+        <div class="ml">PROJECT NAME</div>
+        <div class="mv">{project.name}</div>
+    </div>
+    <div class="mc">
+        <div class="ml">TOTAL CHANGE REQUESTS</div>
+        <div class="mv">{total_crs}</div>
+    </div>
+    <div class="mc">
+        <div class="ml">TOTAL ESTIMATED HOURS</div>
+        <div class="mv">{total_hours_fmt}</div>
+    </div>
+</div>
+
+<div class="sec">
+    <span>ALL PROJECT CHANGE REQUESTS</span>
+    <small>Total: {total_crs}</small>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:40px">SL</th>
+            <th style="width:120px">REF ID</th>
+            <th>REQUEST TITLE</th>
+            <th>CLIENT / CONTACT</th>
+            <th>DATE</th>
+            <th>DEVELOPER</th>
+            <th class="r">EST. HOURS</th>
+            <th>TARGET DATE</th>
+            <th class="c">ACTION</th>
+        </tr>
+    </thead>
+    <tbody>
+        {rows_html}
+    </tbody>
+</table>
+
+<div class="total-bar">
+    <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#aaa;font-weight:700">Project Change Requests Total Work</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">Project: {project.name}</div>
+    </div>
+    <div style="font-size:22px;font-weight:800;color:#29ABE2">{total_hours_fmt}</div>
+</div>
+
+<div style="padding:0 40px 40px;text-align:center;font-size:11px;color:#aaa">
+    System-generated report &nbsp;·&nbsp; Tresvance Softwares &nbsp;·&nbsp; {generated}
+</div>
+</body>
+</html>"""
+        return HttpResponse(html)
+
+
+
     def _build_report(self, project, timesheets, period_label, report_title):
         generated = dt.today().strftime("%d %B %Y")
 
@@ -806,7 +976,11 @@ tr{{border-bottom:1px solid #f0f5f8}}
 .time-input{{background:transparent;border:none;color:#888;font-size:12px;text-align:right;width:75px;font-family:inherit;padding:2px 4px;border-bottom:1px dashed transparent;outline:none;}}
 .time-input:hover{{border-bottom-color:#ddd;}}
 .time-input:focus{{border-bottom-color:#29ABE2;color:#111;background:#f8fafc;}}
-@media print{{.printbar, .remove-btn{{display:none!important}}}}
+@media print{{
+  @page {{ size: auto; margin: 10mm 15mm; }}
+  .printbar, .remove-btn{{display:none!important}}
+}}
+
 </style>
 </head>
 <body>
@@ -1118,8 +1292,244 @@ class TaskAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(ChangeRequest)
+class ChangeRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'ref_id_display',
+        'project',
+        'client_name',
+        'request_date',
+        'assigned_developer',
+        'client_report_button',
+    )
+    list_filter = ('project', 'request_date')
+    search_fields = ('title', 'client_name', 'client_email', 'description', 'technical_scope', 'assigned_developer', 'project__name')
+    date_hierarchy = 'request_date'
+
+    fieldsets = (
+        ('Project & Client Details', {
+            'fields': ('project', 'client_name', 'client_email', 'request_date')
+        }),
+        ('Scope of Work (Client Changes & Updates)', {
+            'fields': ('description', 'technical_scope'),
+            'description': 'Enter requested updates point by point (each new line will appear as a numbered point in the report).'
+        }),
+        ('Developer Assignment & Timeline', {
+            'fields': ('assigned_developer', 'target_completion_date'),
+            'description': 'Developer assigned to execute changes and target delivery date.'
+        }),
+    )
+
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('<int:cr_id>/report/', self.admin_site.admin_view(self.change_request_client_report), name='changerequest_client_report'),
+        ]
+        return custom + urls
+
+    def ref_id_display(self, obj):
+        ref_code = f"TRES-CR-{obj.pk:04d}"
+        return format_html('<strong style="color:#29ABE2;">{}</strong>', ref_code)
+    ref_id_display.short_description = 'Ref ID'
+
+
+    def title_display(self, obj):
+        return format_html('<strong>{}</strong>', obj.title)
+    title_display.short_description = 'Title'
+
+    def estimated_hours_display(self, obj):
+        return f"{obj.estimated_hours} hrs" if obj.estimated_hours else "—"
+    estimated_hours_display.short_description = 'Est. Hours'
+
+    def client_report_button(self, obj):
+        return format_html(
+            '<a href="/admin/home/changerequest/{}/report/" target="_blank" '
+            'style="background:#29ABE2;color:#fff;padding:5px 12px;border-radius:4px;'
+            'text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;'
+            'display:inline-block;">'
+            'Client Report</a>',
+            obj.pk
+        )
+    client_report_button.short_description = 'Report'
+
+    def change_request_client_report(self, request, cr_id):
+        try:
+            cr = ChangeRequest.objects.select_related('project').get(pk=cr_id)
+        except ChangeRequest.DoesNotExist:
+            return HttpResponse("Change Request not found.", status=404)
+
+        html = self._build_client_report_html(cr)
+        return HttpResponse(html)
+
+    def _build_client_report_html(self, cr):
+        generated = dt.today().strftime("%d %b %Y")
+        req_date_str = cr.request_date.strftime("%d %b %Y") if cr.request_date else "—"
+        target_date_str = cr.target_completion_date.strftime("%d %b %Y") if cr.target_completion_date else "To Be Confirmed"
+        ref_id = f"TRES-CR-{cr.id:04d}"
+
+        def _parse_into_points(text):
+            if not text:
+                return []
+            import re
+            lines = text.strip().split('\n')
+            points = []
+            curr = []
+            for line in lines:
+                s = line.strip()
+                if not s:
+                    if curr:
+                        points.append(" ".join(curr))
+                        curr = []
+                    continue
+                # Match bullet points, numbered lists, or new point markers
+                is_marker = bool(re.match(r'^(?:[\d\.\)]+|[•\-\*\>])\s+', s))
+                if is_marker and curr:
+                    points.append(" ".join(curr))
+                    curr = [re.sub(r'^(?:[\d\.\)]+|[•\-\*\>])\s+', '', s)]
+                elif is_marker:
+                    curr = [re.sub(r'^(?:[\d\.\)]+|[•\-\*\>])\s+', '', s)]
+                else:
+                    curr.append(s)
+            if curr:
+                points.append(" ".join(curr))
+            return points
+
+        desc_items = _parse_into_points(cr.description)
+        scope_items = _parse_into_points(cr.technical_scope)
+
+        points_html = ""
+        max_items = max(len(desc_items), len(scope_items), 1)
+        for i in range(max_items):
+            desc_val = desc_items[i] if i < len(desc_items) else (cr.description if i == 0 else "")
+            scope_val = scope_items[i] if i < len(scope_items) else (cr.technical_scope if i == 0 else "")
+            sl_str = str(i + 1).zfill(2)
+
+            scope_block = ""
+            if scope_val:
+                scope_block = f'<div class="point-scope"><strong>Implementation Details:</strong> {scope_val}</div>'
+
+            points_html += f"""
+            <div class="point-row">
+                <div class="point-num">{sl_str}</div>
+                <div class="point-body">
+                    <div class="point-text">{desc_val}</div>
+                    {scope_block}
+                </div>
+            </div>"""
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Change Request Report {ref_id} – {cr.project.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'DM Sans',sans-serif;background:#fff;color:#111;font-size:13px;line-height:1.5}}
+.printbar{{background:#111;padding:10px 40px;display:flex;justify-content:space-between;align-items:center}}
+.printbar span{{font-size:12px;color:#666}}
+.printbar button{{background:#29ABE2;color:#fff;border:none;padding:7px 18px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}}
+.doc-header{{padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;position:relative;border-bottom:3px solid #29ABE2}}
+.logo-text{{font-size:32px;font-weight:800;letter-spacing:2px;line-height:1;color:#111;text-transform:uppercase;position:relative;z-index:2}}
+.logo-text .v{{color:#29ABE2}}
+.logo-sub{{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#aaa;margin-top:2px;position:relative;z-index:2}}
+.logo-addr{{font-size:11px;color:#999;margin-top:6px;line-height:1.4;position:relative;z-index:2}}
+.doc-info{{text-align:right;position:relative;z-index:2;background:#fff;padding-left:20px}}
+.doc-info h2{{font-size:15px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:1px}}
+.doc-info p{{font-size:11px;color:#aaa;margin-top:3px}}
+.period-bar{{background:#29ABE2;padding:8px 40px;display:flex;justify-content:space-between;align-items:center}}
+.period-bar span{{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px}}
+.meta{{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid #f0f5f8}}
+.mc{{padding:12px 20px;border-right:1px solid #f0f5f8}}
+.mc:last-child{{border-right:none}}
+.ml{{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#aaa;margin-bottom:2px;font-weight:600}}
+.mv{{font-size:13px;font-weight:700;color:#111}}
+.sec{{background:#111;margin:20px 40px 0;padding:8px 16px;display:flex;justify-content:space-between;border-radius:4px 4px 0 0}}
+.sec span{{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1.5px}}
+.sec small{{font-size:10px;color:#666}}
+.points-box{{margin:0 40px 24px;border:1px solid #e8f0f5;border-top:none;border-radius:0 0 4px 4px;background:#fff}}
+.point-row{{display:flex;padding:10px 16px;border-bottom:1px solid #f0f5f8;align-items:flex-start;page-break-inside:avoid}}
+.point-row:last-child{{border-bottom:none}}
+.point-num{{font-size:11px;font-weight:800;color:#29ABE2;background:#f0f7fa;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;border:1px solid #d0e7f4}}
+.point-body{{flex:1}}
+.point-text{{font-size:13px;font-weight:600;color:#111;line-height:1.5}}
+.point-scope{{font-size:12px;color:#555;margin-top:4px;background:#f8fafc;padding:6px 10px;border-radius:4px;border-left:3px solid #29ABE2}}
+@media print {{
+  @page {{ size: auto; margin: 10mm 15mm; }}
+  body {{ background: #fff; }}
+  .printbar {{ display: none !important; }}
+  .point-row {{ page-break-inside: avoid; }}
+}}
+
+</style>
+</head>
+<body>
+<div class="printbar">
+    <span>System-generated Change Request Report &nbsp;·&nbsp; {ref_id} &nbsp;·&nbsp; {generated}</span>
+    <button onclick="window.print()">Print / Download PDF</button>
+</div>
+
+<div class="doc-header">
+    <div>
+        <div class="logo-text">TRES<span class="v">V</span>ANCE</div>
+        <div class="logo-sub">SOFTWARES</div>
+        <div class="logo-addr">Tresvance Softwares &nbsp;·&nbsp; Project Management Division</div>
+    </div>
+    <div class="doc-info">
+        <h2>CHANGE REQUEST REPORT</h2>
+        <p>Ref No: <strong>{ref_id}</strong> &nbsp;·&nbsp; Date: <strong>{generated}</strong></p>
+    </div>
+</div>
+
+<div class="period-bar">
+    <span>CLIENT CHANGE REQUEST &nbsp;·&nbsp; {cr.project.name} &nbsp;·&nbsp; {ref_id}</span>
+    <span>{generated}</span>
+</div>
+
+<div class="meta">
+    <div class="mc">
+        <div class="ml">PROJECT NAME</div>
+        <div class="mv">{cr.project.name}</div>
+    </div>
+    <div class="mc">
+        <div class="ml">CLIENT NAME</div>
+        <div class="mv">{cr.client_name}</div>
+    </div>
+    <div class="mc">
+        <div class="ml">REQUEST DATE</div>
+        <div class="mv">{req_date_str}</div>
+    </div>
+    <div class="mc">
+        <div class="ml">TARGET COMPLETION</div>
+        <div class="mv">{target_date_str}</div>
+    </div>
+</div>
+
+<div class="sec">
+    <span>CLIENT REQUESTED UPDATES & SCOPE OF WORK</span>
+    <small>Ref: {ref_id}</small>
+</div>
+
+<div class="points-box">
+    {points_html}
+</div>
+
+<div style="padding:0 40px 40px;text-align:center;font-size:11px;color:#aaa">
+    System-generated report &nbsp;·&nbsp; Tresvance Softwares &nbsp;·&nbsp; {generated}
+</div>
+</body>
+</html>"""
+
+
+
+
+
+
+
 admin.site.site_header = mark_safe(
     'Tresvance Softwares Admin <a href="/" target="_blank" style="display: inline-block; vertical-align: middle; margin-left: 20px; background: #29ABE2; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; border: 1.5px solid #29ABE2; transition: all 0.2s;">💻 Open PM Portal</a>'
 )
+
 admin.site.site_title = "Tresvance Admin Portal"
 admin.site.index_title = "Project Tracker Admin"

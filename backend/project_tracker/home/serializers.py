@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from .models import Project, Timesheet, TimesheetTask, Task, AdminLogin
+from .models import Project, Timesheet, TimesheetTask, Task, AdminLogin, ChangeRequest
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+
     class Meta:
         model  = Project
         fields = ['id', 'name', 'mode', 'version', 'url', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'deploy_command']
@@ -83,3 +84,11 @@ class AdminLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminLogin
         fields = ['id', 'name', 'email']
+
+
+class ChangeRequestSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(source='project.name', read_only=True)
+
+    class Meta:
+        model = ChangeRequest
+        fields = '__all__'

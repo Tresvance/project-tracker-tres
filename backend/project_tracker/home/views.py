@@ -1,12 +1,13 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Project, Timesheet, TimesheetTask, DeployScript, Task, AdminLogin
+from .models import Project, Timesheet, TimesheetTask, DeployScript, Task, AdminLogin, ChangeRequest
 from .serializers import (
     ProjectSerializer,
     TimesheetSerializer,
     TimesheetCreateSerializer,
     TaskSerializer,
     AdminLoginSerializer,
+    ChangeRequestSerializer,
 )
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
@@ -345,4 +346,26 @@ class TaskViewSet(viewsets.ModelViewSet):
 class AdminLoginViewSet(viewsets.ReadOnlyModelViewSet):
     queryset         = AdminLogin.objects.all()
     serializer_class = AdminLoginSerializer
+
+
+class ChangeRequestViewSet(viewsets.ModelViewSet):
+    queryset         = ChangeRequest.objects.all().select_related("project")
+    serializer_class = ChangeRequestSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        project = self.request.query_params.get("project")
+        status_param = self.request.query_params.get("status")
+        priority = self.request.query_params.get("priority")
+        assigned = self.request.query_params.get("assigned")
+        if project:
+            qs = qs.filter(project_id=project)
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if priority:
+            qs = qs.filter(priority=priority)
+        if assigned:
+            qs = qs.filter(assigned_developer__icontains=assigned)
+        return qs
+
 

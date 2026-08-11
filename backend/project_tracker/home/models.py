@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date as dt
 
 
 
@@ -244,4 +245,62 @@ class Task(models.Model):
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Task"
-        verbose_name_plural = "Tasks"
+        verbose_name_plural = "Tasks"
+
+
+class ChangeRequest(models.Model):
+    STATUS_CHOICES = [
+        ("Draft", "Draft"),
+        ("Shared with Client", "Shared with Client"),
+        ("Client Approved", "Client Approved"),
+        ("In Development", "In Development"),
+        ("Completed", "Completed"),
+        ("Rejected", "Rejected"),
+    ]
+    PRIORITY_CHOICES = [
+        ("Low", "Low"),
+        ("Medium", "Medium"),
+        ("High", "High"),
+        ("Critical", "Critical"),
+    ]
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="change_requests")
+    title = models.CharField(max_length=250, blank=True, help_text="Optional summary title")
+    client_name = models.CharField(max_length=150, help_text="Client Organization / Company Name")
+    client_email = models.EmailField(blank=True, help_text="Client contact email")
+    requested_by_contact = models.CharField(max_length=150, blank=True, help_text="Client contact person name")
+    request_date = models.DateField(default=dt.today, help_text="Date request was submitted by client")
+    
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="Draft")
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    assigned_developer = models.CharField(max_length=150, blank=True, help_text="Developer or team member assigned")
+    
+    description = models.TextField(help_text="Detailed description of changes requested by the client")
+    technical_scope = models.TextField(blank=True, help_text="Developer technical implementation scope and notes")
+    estimated_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0, help_text="Estimated development effort in hours")
+    target_completion_date = models.DateField(null=True, blank=True, help_text="Target completion date for development")
+    
+    client_approved_by = models.CharField(max_length=150, blank=True, help_text="Name of person approving from client side")
+    client_approval_date = models.DateField(null=True, blank=True, help_text="Date approved by client")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.title and self.description:
+            first_line = self.description.strip().split('\n')[0]
+            self.title = first_line[:100]
+        elif not self.title:
+            self.title = "Client Change Request"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        ref_code = f"TRES-CR-{self.pk:04d}" if self.pk else "TRES-CR-NEW"
+        return f"{ref_code} — {self.client_name}"
+
+    class Meta:
+        ordering = ["-request_date", "-created_at"]
+        verbose_name = "Change Request"
+        verbose_name_plural = "Change Requests"
+
+
