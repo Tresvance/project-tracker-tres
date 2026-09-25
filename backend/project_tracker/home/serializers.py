@@ -3,10 +3,27 @@ from .models import Project, Timesheet, TimesheetTask, Task, AdminLogin, ChangeR
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    links = serializers.SerializerMethodField()
 
     class Meta:
         model  = Project
-        fields = ['id', 'name', 'mode', 'version', 'url', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'deploy_command']
+        fields = ['id', 'name', 'mode', 'version', 'url', 'links', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'test_deploy_interactive', 'deploy_command']
+
+    def get_links(self, obj):
+        links = obj.project_links.all().order_by('id')
+        if links.exists():
+            return [
+                {
+                    'title': l.title,
+                    'url': l.url,
+                    'env': l.env,
+                    'note': l.remarks,
+                    'remarks': l.remarks,
+                }
+                for l in links
+            ]
+        return obj.links or []
+
 
 
 class TimesheetTaskInputSerializer(serializers.Serializer):

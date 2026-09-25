@@ -10,7 +10,23 @@ from datetime import date as dt, timedelta
 import paramiko
 import threading
 from django.core.cache import cache
-from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task, ChangeRequest
+from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task, ChangeRequest, ProjectLink
+
+
+# ── Project Environment Links Inline (Tabular table to Add / Edit links) ──────
+class ProjectLinkInline(admin.TabularInline):
+    model = ProjectLink
+    extra = 1
+    fields = ('env', 'title', 'url', 'remarks')
+    verbose_name = "Environment Link"
+    verbose_name_plural = "Environments & Links (Live, Test Server, Development, Staging, etc.)"
+
+
+@admin.register(ProjectLink)
+class ProjectLinkAdmin(admin.ModelAdmin):
+    list_display = ('project', 'env', 'title', 'url', 'remarks')
+    list_filter = ('env', 'project')
+    search_fields = ('project__name', 'title', 'url', 'remarks')
 
 
 # ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
@@ -43,7 +59,7 @@ class ProjectAdminForm(forms.ModelForm):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectAdminForm
-    inlines = [DeployScriptInline]
+    inlines = [ProjectLinkInline, DeployScriptInline]
     change_list_template = "admin/home/project/change_list.html"
     list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
     list_filter = ('mode',)

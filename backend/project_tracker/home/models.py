@@ -15,6 +15,10 @@ class DeployScript(models.Model):
         max_length=500,
         help_text='Shell command to run, e.g. "bash /opt/Qpet/deploy_simple.sh"',
     )
+    interactive = models.BooleanField(
+        default=False,
+        help_text='Check if this script is interactive and requires parameters (branch, services, migrations) to be asked before executing.'
+    )
 
     def __str__(self):
         return self.label
@@ -30,6 +34,11 @@ class Project(models.Model):
     mode        = models.CharField(max_length=10, choices=MODE_CHOICES, default="DEV")
     version     = models.CharField(max_length=50, blank=True)
     url         = models.URLField(blank=True)
+    links       = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Multiple links such as Test Server, Development Link, Production, etc. Format: [{'title': '...', 'url': '...', 'env': 'test'}]"
+    )
     remarks     = models.TextField(blank=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -38,6 +47,10 @@ class Project(models.Model):
         blank=True,
         help_text='Shell command to run on the VPS to deploy to the TEST server. '
                    'e.g. "cd /opt/Qpet-test && ./deploy_qpet_test.sh". Leave blank to hide the Test Deploy button.',
+    )
+    test_deploy_interactive = models.BooleanField(
+        default=False,
+        help_text='Check if the test deploy command is interactive and requires parameters (branch, services, migrations) to be asked.'
     )
 
     deploy_command = models.CharField(
@@ -93,6 +106,13 @@ class Project(models.Model):
             except Project.DoesNotExist:
                 pass
                 
+        if not self.url and self.links and isinstance(self.links, list) and len(self.links) > 0:
+            first_url = self.links[0].get('url') if isinstance(self.links[0], dict) else None
+            if first_url:
+                self.url = first_url
+        elif self.url and (not self.links or len(self.links) == 0):
+            self.links = [{'title': 'Production', 'url': self.url, 'env': 'prod'}]
+
         super().save(*args, **kwargs)
         
         if old_rate is not None and old_rate != self.hourly_rate:
@@ -111,6 +131,49 @@ class Project(models.Model):
 
     class Meta:
         ordering = ["name"]
+
+
+class ProjectLink(models.Model):
+    ENV_CHOICES = [
+        ("prod", "🟢 Production (Live)"),
+        ("test", "🟠 Test Server"),
+        ("dev", "🔵 Development"),
+        ("staging", "🟣 Staging"),
+        ("other", "⚪ Other / Custom"),
+    ]
+
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="project_links"
+    )
+    env = models.CharField(
+        max_length=20,
+        choices=ENV_CHOICES,
+        default="test",
+        verbose_name="Environment",
+        help_text="Environment type for badge styling (e.g. Test, Dev, Production)",
+    )
+    title = models.CharField(
+        max_length=150,
+        help_text='Display name, e.g. "Live / Production", "Test Server", "Development"',
+    )
+    url = models.URLField(
+        max_length=500,
+        help_text="Target URL, e.g. https://test.bmce.ac.in/",
+    )
+    remarks = models.CharField(
+        max_length=300,
+        blank=True,
+        verbose_name="Remarks / Notes",
+        help_text='Remarks / notes for this link, e.g. "QA testing build v2.4", "Local port 3000"',
+    )
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Project Environment Link"
+        verbose_name_plural = "Project Environments & Links"
+
+    def __str__(self):
+        return f"{self.project.name} - {self.title} ({self.get_env_display()})"
 
 
 class Timesheet(models.Model):
@@ -302,5 +365,26 @@ class ChangeRequest(models.Model):
         ordering = ["-request_date", "-created_at"]
         verbose_name = "Change Request"
         verbose_name_plural = "Change Requests"
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver([post_save, post_delete], sender=ProjectLink)
+def sync_project_links_field(sender, instance, **kwargs):
+    project = instance.project
+    all_links = project.project_links.all().order_by('id')
+    serialized = [
+        {
+            'title': l.title,
+            'url': l.url,
+            'env': l.env,
+            'note': l.remarks,
+            'remarks': l.remarks,
+        }
+        for l in all_links
+    ]
+    Project.objects.filter(pk=project.pk).update(links=serialized)
+
 
 

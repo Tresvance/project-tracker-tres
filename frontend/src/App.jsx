@@ -84,6 +84,73 @@ const PROJECT_STAGES = [
   "Project Closed"
 ];
 
+const getEnvBadgeInfo = (env = "", title = "") => {
+  const e = (env || "").toLowerCase();
+  const t = (title || "").toLowerCase();
+
+  if (e === "prod" || t.includes("prod") || t.includes("live")) {
+    return {
+      bg: "#ecfdf5",
+      border: "#a7f3d0",
+      text: "#065f46",
+      dot: "#10b981",
+      icon: "🟢",
+      label: "Live / Production"
+    };
+  }
+  if (e === "test" || t.includes("test") || t.includes("qa")) {
+    return {
+      bg: "#fff7ed",
+      border: "#fed7aa",
+      text: "#9a3412",
+      dot: "#f97316",
+      icon: "🧪",
+      label: "Test Server"
+    };
+  }
+  if (e === "dev" || t.includes("dev") || t.includes("local")) {
+    return {
+      bg: "#eff6ff",
+      border: "#bfdbfe",
+      text: "#1e40af",
+      dot: "#3b82f6",
+      icon: "💻",
+      label: "Development"
+    };
+  }
+  if (e === "staging" || t.includes("staging")) {
+    return {
+      bg: "#faf5ff",
+      border: "#e9d5ff",
+      text: "#6b21a8",
+      dot: "#a855f7",
+      icon: "🟣",
+      label: "Staging"
+    };
+  }
+  return {
+    bg: "#f8fafc",
+    border: "#e2e8f0",
+    text: "#334155",
+    dot: "#64748b",
+    icon: "🔗",
+    label: "Link"
+  };
+};
+
+const getShortLabel = (title = "", env = "") => {
+  const t = (title || "").trim();
+  const lower = t.toLowerCase();
+  const e = (env || "").toLowerCase();
+
+  if (lower.includes("live") || lower.includes("prod") || e === "prod") return "Live";
+  if (lower.includes("test") || lower.includes("qa") || e === "test") return "Test";
+  if (lower.includes("dev") || lower.includes("local") || e === "dev") return "Dev";
+  if (lower.includes("staging") || e === "staging") return "Stage";
+  if (t.length > 9) return t.substring(0, 8) + "m…";
+  return t || "Link";
+};
+
 export default function App() {
   const [view, setView] = useState(() => localStorage.getItem("app_view") || "portal"); // "portal" or "dashboard"
   const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, projects, tasks, add_project
@@ -121,6 +188,15 @@ export default function App() {
   const [projDepartment, setProjDepartment] = useState("Select Department");
   const [projTags, setProjTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
+
+  // Project URLs / Environments States
+  const [projUrl, setProjUrl] = useState("");
+  const [projLinks, setProjLinks] = useState([]);
+  const [linkInputTitle, setLinkInputTitle] = useState("");
+  const [linkInputUrl, setLinkInputUrl] = useState("");
+  const [linkInputEnv, setLinkInputEnv] = useState("test");
+  const [linkInputNote, setLinkInputNote] = useState("");
+
 
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [memberSearchText, setMemberSearchText] = useState("");
@@ -429,6 +505,12 @@ export default function App() {
     setProjDepartment("Select Department");
     setProjTags([]);
     setSelectedMembers([]);
+    setProjUrl("");
+    setProjLinks([]);
+    setLinkInputTitle("");
+    setLinkInputUrl("");
+    setLinkInputEnv("test");
+    setLinkInputNote("");
     setProjImageName("");
     setProjImageBase64("");
     setIsEditingProject(false);
@@ -464,6 +546,14 @@ export default function App() {
     setProjTags(details.tags);
     setSelectedMembers(details.members);
     setProjUrl(project.url || "");
+    const existingLinks = (Array.isArray(project.links) && project.links.length > 0)
+      ? project.links
+      : (project.url ? [{ title: "Live / Production", url: project.url, env: "prod" }] : []);
+    setProjLinks(existingLinks);
+    setLinkInputTitle("");
+    setLinkInputUrl("");
+    setLinkInputEnv("test");
+    setLinkInputNote("");
     setProjImageName(details.imageName || "");
     setProjImageBase64(details.imageBase64 || "");
 
@@ -831,11 +921,14 @@ Project Image Data: ${projImageBase64 || ""}
     if (projStatus === "Completed") apiMode = "PROD";
     if (projStatus === "Maintenance") apiMode = "MAINT";
 
+    const primaryUrl = (projLinks.length > 0 && projLinks[0].url) ? projLinks[0].url : (projUrl || "");
+
     const payload = {
       name: projName,
       mode: apiMode,
       version: "1.0.0",
-      url: projUrl || "",
+      url: primaryUrl,
+      links: projLinks,
       remarks: richRemarks,
       hourly_rate: 0
     };
@@ -863,6 +956,7 @@ Project Image Data: ${projImageBase64 || ""}
         setFormErrorMessage(errData ? JSON.stringify(errData) : "Server error when saving project.");
       });
   };
+
 
   // Calculations
   const totalProjectsCount = projects.length;
@@ -922,10 +1016,16 @@ Project Image Data: ${projImageBase64 || ""}
     PROD: { bg: "#d1fae5", text: "#065f46" },
   };
 
-  const filteredProjects = projects.filter(p =>
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.mode?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProjects = projects.filter(p => {
+    const q = search.toLowerCase();
+    const matchesName = p.name?.toLowerCase().includes(q);
+    const matchesMode = p.mode?.toLowerCase().includes(q);
+    const matchesUrl = p.url?.toLowerCase().includes(q);
+    const matchesLinks = Array.isArray(p.links) && p.links.some(l => 
+      l.title?.toLowerCase().includes(q) || l.url?.toLowerCase().includes(q)
+    );
+    return matchesName || matchesMode || matchesUrl || matchesLinks;
+  });
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
@@ -974,17 +1074,20 @@ Project Image Data: ${projImageBase64 || ""}
               <div style={emptyBox}>No projects found</div>
             ) : (
               <div style={{ background: "#fff", border: "1px solid #e2eaf0", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 70px 2.5fr 70px 1.5fr", background: "#111" }}>
-                  {["Project Name", "Mode", "URL", "Version", "Remarks"].map((h) => (
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", background: "#111" }}>
+                  {["Project Name", "Environments & Links", "Version", "Remarks"].map((h) => (
                     <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: "#888" }}>{h}</div>
                   ))}
                 </div>
 
                 {filteredProjects.map((project, i) => {
-                  const mc = modeColor[project.mode] || { bg: "#f3f4f6", text: "#374151" };
+                  const rawLinks = Array.isArray(project.links) && project.links.length > 0
+                    ? project.links
+                    : (project.url ? [{ title: "Live / Production", url: project.url, env: "prod", note: "" }] : []);
+
                   return (
                     <div key={project.id}
-                      style={{ display: "grid", gridTemplateColumns: "1.2fr 70px 2.5fr 70px 1.5fr", borderBottom: "1px solid #f0f4f7", background: i % 2 === 0 ? "#fff" : "#fafcfd", transition: "background .15s" }}
+                      style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", borderBottom: "1px solid #f0f4f7", background: i % 2 === 0 ? "#fff" : "#fafcfd", transition: "background .15s" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#f0f7fc"}
                       onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#fafcfd"}>
 
@@ -993,23 +1096,97 @@ Project Image Data: ${projImageBase64 || ""}
                         <span style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>{project.name}</span>
                       </div>
 
-                      <div style={{ padding: "14px 10px", display: "flex", alignItems: "center" }}>
-                        <span style={{ background: mc.bg, color: mc.text, borderRadius: 20, padding: "3px 9px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>
-                          {project.mode}
-                        </span>
-                      </div>
+                      <div style={{ padding: "12px 18px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 7, minWidth: 0 }}>
+                        {rawLinks.length === 0 ? (
+                          <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>
+                        ) : (
+                          rawLinks.map((link, lIdx) => {
+                            const b = getEnvBadgeInfo(link.env, link.title);
+                            const shortLabel = getShortLabel(link.title, link.env);
+                            const linkNote = link.note || link.remarks;
+                            return (
+                              <div key={lIdx} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                                {/* Environment Badge */}
+                                <span style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  background: b.bg,
+                                  border: `1px solid ${b.border}`,
+                                  color: b.text,
+                                  padding: "2px 7px",
+                                  borderRadius: 4,
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  letterSpacing: 0.3,
+                                  flexShrink: 0,
+                                  minWidth: 44,
+                                  justifyContent: "center",
+                                  textTransform: "uppercase"
+                                }}>
+                                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: b.dot, flexShrink: 0 }} />
+                                  {shortLabel}
+                                </span>
 
-                      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", overflow: "hidden" }}>
-                        {project.url ? (
-                          <a href={project.url} target="_blank" rel="noopener noreferrer"
-                            title={project.url}
-                            style={{ color: "#29ABE2", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", gap: 5, minWidth: 0, width: "100%" }}
-                            onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                            onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
-                            <span style={{ fontSize: 11, flexShrink: 0 }}>🔗</span>
-                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{project.url}</span>
-                          </a>
-                        ) : <span style={{ color: "#ccc", fontSize: 13 }}>—</span>}
+                                {/* Visible URL Link */}
+                                <a
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={link.url}
+                                  style={{
+                                    fontSize: 12,
+                                    color: "#00a2e8",
+                                    textDecoration: "none",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    fontWeight: 600,
+                                    maxWidth: 240,
+                                    minWidth: 0,
+                                    flexShrink: 1
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                                  onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {link.url}
+                                  </span>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6, flexShrink: 0 }}>
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                  </svg>
+                                </a>
+
+                                {/* Note / Remarks for this link */}
+                                {linkNote ? (
+                                  <span style={{
+                                    fontSize: 11,
+                                    color: "#475569",
+                                    background: "#f1f5f9",
+                                    border: "1px solid #e2e8f0",
+                                    padding: "1px 8px",
+                                    borderRadius: 4,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: 240,
+                                    flexShrink: 0,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4
+                                  }} title={linkNote}>
+                                    <span style={{ color: "#94a3b8", fontSize: 9 }}>💬</span>
+                                    <span>{linkNote}</span>
+                                  </span>
+                                ) : null}
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
 
                       <div style={{ padding: "14px 10px", display: "flex", alignItems: "center" }}>
@@ -2182,6 +2359,69 @@ Project Image Data: ${projImageBase64 || ""}
                     </div>
                   </div>
 
+                  {/* Environments & Links (View only - Managed in Django Admin) */}
+                  <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 32, paddingTop: 28 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <div>
+                        <h3 style={sectionTitleStyle}>Project Links & Environments</h3>
+                        <p style={{ fontSize: 12, color: "#64748b", margin: "4px 0 0" }}>
+                          Test servers, dev links, and live URLs are added & managed inside the <strong>Django Admin Panel</strong>.
+                        </p>
+                      </div>
+                      <a
+                        href="/admin/home/project/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 6,
+                          padding: "6px 14px", fontSize: 11, fontWeight: 700, color: "#00a2e8",
+                          textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5
+                        }}>
+                        <span>⚙️ Manage in Django Admin</span> ↗
+                      </a>
+                    </div>
+
+                    {/* Configured Links List (View Only) */}
+                    <div style={{ marginTop: 10 }}>
+                      {projLinks.length === 0 ? (
+                        <div style={{ padding: "16px", background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1", fontSize: 12, color: "#94a3b8", textAlign: "center" }}>
+                          No server links configured yet for this project. Add them under <strong>Project Environments & Links</strong> in the Django Admin.
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 10 }}>
+                          {projLinks.map((link, idx) => {
+                            const b = getEnvBadgeInfo(link.env, link.title);
+                            return (
+                              <div key={idx} style={{
+                                display: "flex", alignItems: "center",
+                                padding: "10px 14px", background: "#fff", borderRadius: 8,
+                                border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+                              }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflow: "hidden", flex: 1 }}>
+                                  <span style={{
+                                    display: "inline-flex", alignItems: "center", gap: 4,
+                                    background: b.bg, border: `1px solid ${b.border}`, color: b.text,
+                                    padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 800, whiteSpace: "nowrap"
+                                  }}>
+                                    {b.icon} {link.title || b.label}
+                                  </span>
+                                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#00a2e8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600, textDecoration: "none" }} title={link.url}>
+                                    {link.url} ↗
+                                  </a>
+                                  {(link.note || link.remarks) && (
+                                    <span style={{ fontSize: 11, color: "#64748b", background: "#f1f5f9", padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={link.note || link.remarks}>
+                                      💬 {link.note || link.remarks}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Bottom: Project Members Section */}
                   <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 32, paddingTop: 28 }}>
                     <h3 style={sectionTitleStyle}>Project Members</h3>
@@ -2593,6 +2833,65 @@ Project Image Data: ${projImageBase64 || ""}
                           </div>
                           <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4, fontWeight: 700 }}>{details.code}</div>
                           <p style={{ fontSize: 13, color: "#475569", marginTop: 8, lineHeight: 1.5 }}>{details.description || "No description provided for this project."}</p>
+
+                          {/* Project Environment Links Row */}
+                          {(() => {
+                            const pLinks = (Array.isArray(selectedProject.links) && selectedProject.links.length > 0)
+                              ? selectedProject.links
+                              : (selectedProject.url ? [{ title: "Live / Production", url: selectedProject.url, env: "prod" }] : []);
+                            
+                            return (
+                              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px dashed #e2e8f0" }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                  Environments:
+                                </span>
+                                {pLinks.length === 0 ? (
+                                  <span style={{ fontSize: 12, color: "#94a3b8" }}>No server links configured yet</span>
+                                ) : (
+                                  pLinks.map((link, idx) => {
+                                    const b = getEnvBadgeInfo(link.env, link.title);
+                                    const linkNote = link.remarks || link.note;
+                                    return (
+                                      <a
+                                        key={idx}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={`${link.title || b.label}: ${link.url}${linkNote ? ` (${linkNote})` : ""}`}
+                                        style={{
+                                          display: "inline-flex", alignItems: "center", gap: 6,
+                                          background: b.bg, border: `1px solid ${b.border}`, color: b.text,
+                                          padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+                                          textDecoration: "none", transition: "all 0.15s",
+                                          boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
+                                        }}
+                                        onMouseEnter={e => {
+                                          e.currentTarget.style.transform = "translateY(-1px)";
+                                          e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.08)";
+                                        }}
+                                        onMouseLeave={e => {
+                                          e.currentTarget.style.transform = "none";
+                                          e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.03)";
+                                        }}>
+                                        <span style={{ fontSize: 11 }}>{b.icon}</span>
+                                        <span>{link.title || b.label}</span>
+                                        {linkNote && (
+                                          <span style={{ opacity: 0.85, fontWeight: 500, fontSize: 11, borderLeft: `1px solid ${b.border}`, paddingLeft: 6, marginLeft: 2 }}>
+                                            {linkNote}
+                                          </span>
+                                        )}
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                          <polyline points="15 3 21 3 21 9"></polyline>
+                                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                                        </svg>
+                                      </a>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -3504,6 +3803,7 @@ Project Image Data: ${projImageBase64 || ""}
           </div>
         </div>
       )}
+
 
     </div>
   );

@@ -31,6 +31,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         mode = data.get("mode", "DEV")
         version = data.get("version", "")
         url = data.get("url", "")
+        links = data.get("links", [])
         remarks = data.get("remarks", "")
         hourly_rate = data.get("hourly_rate", 0)
         test_deploy_command = data.get("test_deploy_command", "")
@@ -42,6 +43,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             mode=mode,
             version=version,
             url=url,
+            links=links,
             remarks=remarks,
             hourly_rate=hourly_rate,
             test_deploy_command=test_deploy_command,
