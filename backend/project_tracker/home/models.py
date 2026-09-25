@@ -387,4 +387,169 @@ def sync_project_links_field(sender, instance, **kwargs):
     Project.objects.filter(pk=project.pk).update(links=serialized)
 
 
+class ClientBill(models.Model):
+    CATEGORY_CHOICES = [
+        ("HOSTING", "☁️ Hosting & Cloud Server"),
+        ("DOMAIN", "🌐 Domain Registration / Renewal"),
+        ("DATABASE", "🗄️ Database & Storage"),
+        ("EMAIL_SMS", "✉️ Email, SMS & WhatsApp API"),
+        ("SSL_SECURITY", "🔒 SSL, WAF & Security"),
+        ("SOFTWARE_LICENSE", "💻 Software & Tool License"),
+        ("API_AI", "🤖 API & AI Model Usage"),
+        ("MAINTENANCE", "🛠️ Maintenance & Infrastructure"),
+        ("OTHER", "📦 Other Platform Expense"),
+    ]
+
+    BILLING_CYCLE_CHOICES = [
+        ("MONTHLY", "Monthly (Recurring)"),
+        ("YEARLY", "Yearly / Annual (Recurring)"),
+        ("QUARTERLY", "Quarterly (Every 3 months)"),
+        ("SEMI_ANNUAL", "Semi-Annual (Every 6 months)"),
+        ("ONE_TIME", "One-Time (Fixed Expense)"),
+    ]
+
+    STATUS_CHOICES = [
+        ("PAID", "✅ Paid"),
+        ("PENDING", "⏳ Payment Pending"),
+        ("OVERDUE", "⚠️ Overdue"),
+        ("RENEWED", "🔄 Renewed"),
+        ("CANCELLED", "❌ Cancelled / Expired"),
+    ]
+
+    CURRENCY_CHOICES = [
+        ("INR", "₹ INR"),
+        ("USD", "$ USD"),
+        ("EUR", "€ EUR"),
+        ("GBP", "£ GBP"),
+        ("AED", "AED"),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="client_bills",
+        verbose_name="Associated Project",
+        help_text="Project associated with this hosting/platform bill (or leave blank if company-wide)"
+    )
+    service_name = models.CharField(
+        max_length=150,
+        verbose_name="Service / Item Name",
+        help_text='e.g. AWS EC2 t3.large, DigitalOcean Droplet, Vercel Pro, Namecheap .com domain'
+    )
+    provider = models.CharField(
+        max_length=100,
+        verbose_name="Platform / Provider",
+        help_text='e.g. AWS, DigitalOcean, Hostinger, Vercel, Namecheap, Cloudflare, OpenAI, Twilio'
+    )
+    category = models.CharField(
+        max_length=40,
+        choices=CATEGORY_CHOICES,
+        default="HOSTING",
+        verbose_name="Category"
+    )
+    billing_cycle = models.CharField(
+        max_length=30,
+        choices=BILLING_CYCLE_CHOICES,
+        default="MONTHLY",
+        verbose_name="Billing Cycle"
+    )
+    cost_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Vendor Cost (Expense)",
+        help_text="Amount paid to vendor/platform (what company pays)"
+    )
+    client_charge_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Client Billed Amount",
+        help_text="Amount billed to client. If included in retainer or unbilled, leave 0"
+    )
+    currency = models.CharField(
+        max_length=10,
+        choices=CURRENCY_CHOICES,
+        default="INR",
+        verbose_name="Currency"
+    )
+    billing_date = models.DateField(
+        verbose_name="Billing / Invoice Date",
+        help_text="Date invoice was generated or period started"
+    )
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Due / Renewal Date",
+        help_text="Expiration or next scheduled renewal date"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="PAID",
+        verbose_name="Payment Status"
+    )
+    paid_by = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Paid By / Method",
+        help_text="e.g. Company Card, Client Card, Bank Transfer, PayPal, Joel"
+    )
+    invoice_ref = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Invoice # / Reference",
+        help_text="Vendor invoice or transaction reference ID"
+    )
+    invoice_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name="Invoice URL / Receipt Link",
+        help_text="Direct link to invoice PDF, receipt, or portal bill"
+    )
+    remarks = models.TextField(
+        blank=True,
+        verbose_name="Remarks / Server Specs / Notes",
+        help_text="Server IP, specifications, renewal details, or client billing terms"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-due_date", "-billing_date", "-id"]
+        verbose_name = "Client Bill / Platform Expense"
+        verbose_name_plural = "Client Bills & Platform Expenses"
+
+    def __str__(self):
+        proj_str = self.project.name if self.project else "Company Wide"
+        return f"[{proj_str}] {self.service_name} ({self.provider}) - {self.currency} {self.cost_amount}"
+
+    @property
+    def margin(self):
+        return (self.client_charge_amount or 0) - (self.cost_amount or 0)
+
+    @property
+    def margin_percentage(self):
+        charge = float(self.client_charge_amount or 0)
+        cost = float(self.cost_amount or 0)
+        if charge > 0:
+            return round(((charge - cost) / charge) * 100, 1)
+        return 0.0
+
+    @property
+    def monthly_cost_normalized(self):
+        cost = float(self.cost_amount or 0)
+        if self.billing_cycle == "YEARLY":
+            return cost / 12.0
+        elif self.billing_cycle == "QUARTERLY":
+            return cost / 3.0
+        elif self.billing_cycle == "SEMI_ANNUAL":
+            return cost / 6.0
+        elif self.billing_cycle == "MONTHLY":
+            return cost
+        elif self.billing_cycle == "ONE_TIME":
+            return 0.0
+        return cost
 

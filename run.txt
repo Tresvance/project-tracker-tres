@@ -1,0 +1,13 @@
+cd d:\track\backend\project_tracker
+.\venv\Scripts\activate.bat
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8000
+
+
+
+
+
+cd d:\track\frontend
+npm install
+
+npm run dev

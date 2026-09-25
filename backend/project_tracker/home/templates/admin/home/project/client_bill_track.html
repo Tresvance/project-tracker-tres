@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Bill & Platform Expense Tracker — Tresvance Softwares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-alt: #f1f5f9;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --border-focus: #0284c7;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --success-border: #a7f3d0;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --info: #0284c7;
+      --info-bg: #f0f9ff;
+      --info-border: #bae6fd;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Bar */
+    .topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge svg {
+      width: 30px;
+      height: 20px;
+    }
+    .topbar-title h1 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .topbar-title h1 span.tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: var(--info-bg);
+      color: var(--info);
+      border: 1px solid var(--info-border);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .topbar-title p {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.35);
+    }
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-alt);
+      color: var(--text-main);
+      border-color: #cbd5e1;
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--info-bg);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 24px 32px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* KPI Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .kpi-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-accent, #0284c7);
+    }
+    .kpi-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+    .kpi-icon {
+      font-size: 18px;
+    }
+    .kpi-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .badge-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+    .badge-danger  { background: var(--danger-bg);  color: var(--danger);  border: 1px solid var(--danger-border); }
+    .badge-info    { background: var(--info-bg);    color: var(--info);    border: 1px solid var(--info-border); }
+    .badge-neutral { background: var(--bg-alt);     color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* Renewal Alerts Banner */
+    .renewal-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .renewal-banner-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .renewal-banner-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .renewal-items-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .renewal-item {
+      background: #ffffff;
+      border: 1px solid #fde68a;
+      border-radius: 7px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .renewal-item-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .renewal-item-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Breakdown Section (2 cols) */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px) {
+      .breakdown-grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .panel-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Progress bar breakdown */
+    .cat-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cat-item-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .cat-bar-bg {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .cat-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* Simple Table inside panels */
+    .simple-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .simple-table th {
+      text-align: left;
+      padding: 8px 10px;
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .simple-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+    .simple-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Main Table Section */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .table-toolbar {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 6px 10px;
+      gap: 6px;
+      min-width: 250px;
+    }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13px;
+      width: 100%;
+    }
+    .filters-wrap {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .select-filter {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .select-filter:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+
+    /* Main Data Table */
+    .data-table-wrap {
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .data-table th {
+      background: #f8fafc;
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+    .data-table tbody tr {
+      transition: background 0.1s;
+    }
+    .data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    .data-table tfoot td {
+      background: #f8fafc;
+      border-top: 2px solid var(--border);
+      padding: 12px 14px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* Modal Overlay & Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 660px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-head h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text-main); }
+    .modal-body {
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+    }
+    .form-input, .form-select, .form-textarea {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 65px;
+    }
+    .modal-foot {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast */
+    #toast-msg {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #334155;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 2000;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; color: #000; }
+      .topbar, .btn, .modal-overlay, .table-toolbar { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      .kpi-card, .panel, .table-container { border: 1px solid #ccc; background: #fff; color: #000; box-shadow: none; }
+      .data-table th, .data-table td { color: #000; border-bottom: 1px solid #eee; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-badge">
+        <svg viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 5 L28 45 L46 5" stroke="#0284c7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M54 45 L72 5 L90 45" stroke="#0284c7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div class="topbar-title">
+        <h1>
+          Client Bill & Hosting Track
+          <span class="tag">Portal</span>
+        </h1>
+        <p>Tresvance Softwares &bull; Hosting & Platform Subscriptions vs Client Charges</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <span>+</span> Add Platform Bill
+      </button>
+      <a href="export/csv/" class="btn btn-secondary" title="Export full billing records to CSV">
+        <span>📥</span> Export CSV
+      </a>
+      <button class="btn btn-secondary" onclick="window.print()" title="Print Summary Report">
+        <span>🖨️</span> Print
+      </button>
+      <a href="/admin/home/project/" class="btn btn-outline" title="Return to Django Project change list">
+        <span>←</span> Back to Projects
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- KPI Summary Grid -->
+    <section class="kpi-grid">
+      <div class="kpi-card" style="--card-accent: #0284c7;">
+        <div class="kpi-head">
+          <span class="kpi-label">Total Platform Cost</span>
+          <span class="kpi-icon">☁️</span>
+        </div>
+        <div class="kpi-val" id="metric-total-cost">₹{{ total_cost|floatformat:2 }}</div>
+        <div class="kpi-sub">
+          <span>Paid to AWS, Namecheap, Vercel, etc.</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--card-accent: #059669;">
+        <div class="kpi-head">
+          <span class="kpi-label">Total Billed to Clients</span>
+          <span class="kpi-icon">📈</span>
+        </div>
+        <div class="kpi-val" id="metric-total-billed" style="color:#059669;">₹{{ total_client_charge|floatformat:2 }}</div>
+        <div class="kpi-sub">
+          <span>Invoiced / Charged for infrastructure</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--card-accent: {% if net_margin >= 0 %}#059669{% else %}#dc2626{% endif %};">
+        <div class="kpi-head">
+          <span class="kpi-label">Net Infrastructure Margin</span>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-val" id="metric-net-margin" style="color:{% if net_margin >= 0 %}#059669{% else %}#dc2626{% endif %};">
+          {% if net_margin >= 0 %}+{% endif %}₹{{ net_margin|floatformat:2 }}
+        </div>
+        <div class="kpi-sub">
+          <span class="badge {% if net_margin >= 0 %}badge-success{% else %}badge-danger{% endif %}">
+            {{ margin_percentage }}% Margin
+          </span>
+          <span>profit over spend</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--card-accent: #8b5cf6;">
+        <div class="kpi-head">
+          <span class="kpi-label">Monthly Run Rate</span>
+          <span class="kpi-icon">🔄</span>
+        </div>
+        <div class="kpi-val" style="color:#6d28d9;">₹{{ monthly_run_rate|floatformat:2 }}<span style="font-size:13px;color:var(--text-dim);font-weight:600;">/mo</span></div>
+        <div class="kpi-sub">
+          <span>Annualized: ₹{{ annual_run_rate|floatformat:2 }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--card-accent: #d97706;">
+        <div class="kpi-head">
+          <span class="kpi-label">Renewals in 30 Days</span>
+          <span class="kpi-icon">⏰</span>
+        </div>
+        <div class="kpi-val" style="color:#b45309;">{{ renewals_count }}</div>
+        <div class="kpi-sub">
+          {% if renewals_count > 0 %}
+            <span class="badge badge-warning">Action Required</span>
+            <span>Upcoming expirations</span>
+          {% else %}
+            <span class="badge badge-success">All Clear</span>
+            <span>No upcoming renewals</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--card-accent: #64748b;">
+        <div class="kpi-head">
+          <span class="kpi-label">Active Platform Services</span>
+          <span class="kpi-icon">📦</span>
+        </div>
+        <div class="kpi-val">{{ active_count }}</div>
+        <div class="kpi-sub">
+          <span>Across {{ projects|length }} Projects</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Renewal Alerts Banner (if any) -->
+    {% if upcoming_bills %}
+    <section class="renewal-banner">
+      <div class="renewal-banner-head">
+        <div class="renewal-banner-title">
+          <span>⚠️</span>
+          <span>Upcoming Platform & Domain Renewals (Next 30 Days)</span>
+        </div>
+        <span style="font-size:12px;color:#92400e;font-weight:700;">{{ upcoming_bills|length }} services expiring soon</span>
+      </div>
+      <div class="renewal-items-scroll">
+        {% for b in upcoming_bills %}
+          <div class="renewal-item">
+            <div>
+              <div class="renewal-item-title">{{ b.service_name }}</div>
+              <div class="renewal-item-meta">
+                <span>{{ b.provider }}</span> &bull; 
+                <strong style="color:var(--text-main);">₹{{ b.cost_amount }}</strong> &bull; 
+                <span>Due: {{ b.due_date|date:"d M Y" }}</span>
+              </div>
+            </div>
+            {% if b.days_remaining < 0 %}
+              <span class="badge badge-danger">Overdue {{ b.days_remaining_abs }}d</span>
+            {% elif b.days_remaining == 0 %}
+              <span class="badge badge-danger">Expires Today!</span>
+            {% else %}
+              <span class="badge badge-warning">Expires in {{ b.days_remaining }}d</span>
+            {% endif %}
+            <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="quickRenewBill({{ b.id }}, '{{ b.service_name|escapejs }}', '{{ b.due_date|date:"Y-m-d" }}', '{{ b.billing_cycle }}')">
+              🔄 Renew
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Analytical Breakdown: Project Breakdown & Category Distribution -->
+    <section class="breakdown-grid">
+      <!-- Project Wise Financials -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">
+              <span>📊</span> Project-Wise Platform Breakdown
+            </div>
+            <div class="panel-sub">Platform costs vs billed client charges</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Services</th>
+                <th>Monthly Run</th>
+                <th>Client Charge</th>
+                <th>Net Margin</th>
+                <th>Profit %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in project_breakdown %}
+                <tr>
+                  <td>
+                    <strong style="color:#0284c7;">{{ p.name }}</strong>
+                  </td>
+                  <td>{{ p.services_count }}</td>
+                  <td>₹{{ p.monthly_cost|floatformat:2 }}</td>
+                  <td style="color:#059669;font-weight:700;">₹{{ p.client_charge|floatformat:2 }}</td>
+                  <td>
+                    <span style="font-weight:700;color:{% if p.net_margin >= 0 %}#059669{% else %}#dc2626{% endif %};">
+                      {% if p.net_margin >= 0 %}+{% endif %}₹{{ p.net_margin|floatformat:2 }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge {% if p.margin_pct >= 0 %}badge-success{% else %}badge-danger{% endif %}">
+                      {{ p.margin_pct }}%
+                    </span>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px;">
+                    No project bills recorded yet.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Category Distribution -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">
+              <span>🏷️</span> Platform Category Distribution
+            </div>
+            <div class="panel-sub">Expenditure distribution across hosting, domains & tools</div>
+          </div>
+        </div>
+
+        <div class="cat-bar-wrap">
+          {% for cat in category_breakdown %}
+            <div class="cat-item">
+              <div class="cat-item-top">
+                <span>{{ cat.label }} ({{ cat.count }})</span>
+                <span>
+                  <strong style="color:var(--text-main);">₹{{ cat.total_cost|floatformat:2 }}</strong>
+                  <span style="color:var(--text-dim);font-size:11px;">({{ cat.pct }}%)</span>
+                </span>
+              </div>
+              <div class="cat-bar-bg">
+                <div class="cat-bar-fill" style="width: {{ cat.pct }}%; background: {{ cat.color }};"></div>
+              </div>
+            </div>
+          {% empty %}
+            <div style="text-align:center;color:var(--text-dim);padding:24px;">
+              No category data available yet.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Detailed Interactive Table Section -->
+    <section class="table-container">
+      <!-- Toolbar & Filters -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <span style="color:var(--text-dim);">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search service, provider, project, ref..." oninput="filterTable()">
+        </div>
+
+        <div class="filters-wrap">
+          <!-- Project Filter -->
+          <select id="filterProject" class="select-filter" onchange="filterTable()">
+            <option value="">📁 All Projects</option>
+            {% for p in projects %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+            <option value="none">🏢 Company Wide / General</option>
+          </select>
+
+          <!-- Category Filter -->
+          <select id="filterCategory" class="select-filter" onchange="filterTable()">
+            <option value="">🏷️ All Categories</option>
+            <option value="HOSTING">☁️ Hosting & Cloud</option>
+            <option value="DOMAIN">🌐 Domain Registration</option>
+            <option value="DATABASE">🗄️ Database & Storage</option>
+            <option value="EMAIL_SMS">✉️ Email & SMS API</option>
+            <option value="SSL_SECURITY">🔒 SSL & Security</option>
+            <option value="SOFTWARE_LICENSE">💻 Software License</option>
+            <option value="API_AI">🤖 API & AI Usage</option>
+            <option value="MAINTENANCE">🛠️ Maintenance</option>
+            <option value="OTHER">📦 Other</option>
+          </select>
+
+          <!-- Cycle Filter -->
+          <select id="filterCycle" class="select-filter" onchange="filterTable()">
+            <option value="">🔄 All Cycles</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="YEARLY">Yearly / Annual</option>
+            <option value="QUARTERLY">Quarterly</option>
+            <option value="SEMI_ANNUAL">Semi-Annual</option>
+            <option value="ONE_TIME">One-Time</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="filterStatus" class="select-filter" onchange="filterTable()">
+            <option value="">🔘 All Statuses</option>
+            <option value="PAID">✅ Paid</option>
+            <option value="PENDING">⏳ Payment Pending</option>
+            <option value="OVERDUE">⚠️ Overdue</option>
+            <option value="RENEWED">🔄 Renewed</option>
+            <option value="CANCELLED">❌ Cancelled</option>
+          </select>
+
+          <!-- Due Window Filter -->
+          <select id="filterWindow" class="select-filter" onchange="filterTable()">
+            <option value="">📅 All Expirations</option>
+            <option value="due7">⏰ Due in 7 Days</option>
+            <option value="due30">⏰ Due in 30 Days</option>
+            <option value="overdue">⚠️ Overdue Only</option>
+          </select>
+
+          <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="resetFilters()">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Data Table -->
+      <div class="data-table-wrap">
+        <table class="data-table" id="billsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Project</th>
+              <th>Service / Item</th>
+              <th>Provider</th>
+              <th>Category</th>
+              <th>Cycle</th>
+              <th>Vendor Cost (Expense)</th>
+              <th>Client Charge (Revenue)</th>
+              <th>Net Margin</th>
+              <th>Due / Renewal</th>
+              <th>Status</th>
+              <th>Invoice / Ref</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="billsTableBody">
+            {% for b in bills %}
+              <tr id="row-{{ b.id }}"
+                  data-id="{{ b.id }}"
+                  data-project-id="{{ b.project_id|default:'' }}"
+                  data-project-name="{{ b.project.name|default:'Company Wide' }}"
+                  data-service-name="{{ b.service_name }}"
+                  data-provider="{{ b.provider }}"
+                  data-category="{{ b.category }}"
+                  data-cycle="{{ b.billing_cycle }}"
+                  data-cost="{{ b.cost_amount }}"
+                  data-client-charge="{{ b.client_charge_amount }}"
+                  data-currency="{{ b.currency }}"
+                  data-billing-date="{{ b.billing_date|date:'Y-m-d' }}"
+                  data-due-date="{{ b.due_date|date:'Y-m-d'|default:'' }}"
+                  data-status="{{ b.status }}"
+                  data-paid-by="{{ b.paid_by }}"
+                  data-invoice-ref="{{ b.invoice_ref }}"
+                  data-invoice-url="{{ b.invoice_url }}"
+                  data-remarks="{{ b.remarks }}"
+                  data-days-remaining="{{ b.days_remaining|default:'' }}">
+                
+                <td style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;">
+                  #{{ b.id }}
+                </td>
+
+                <td>
+                  {% if b.project %}
+                    <span class="badge badge-info">{{ b.project.name }}</span>
+                  {% else %}
+                    <span class="badge badge-neutral">Company Wide</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <div style="font-weight:700;color:var(--text-main);">{{ b.service_name }}</div>
+                  {% if b.remarks %}
+                    <div style="font-size:11px;color:var(--text-dim);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ b.remarks }}">
+                      💬 {{ b.remarks }}
+                    </div>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#0284c7;font-weight:600;">
+                    {{ b.provider }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="badge badge-neutral">{{ b.get_category_display }}</span>
+                </td>
+
+                <td>
+                  <span style="font-size:12px;color:var(--text-dim);">
+                    {{ b.get_billing_cycle_display }}
+                  </span>
+                </td>
+
+                <td>
+                  <strong style="color:var(--text-main);font-family:'JetBrains Mono',monospace;">
+                    ₹{{ b.cost_amount|floatformat:2 }}
+                  </strong>
+                </td>
+
+                <td>
+                  <strong style="color:#059669;font-family:'JetBrains Mono',monospace;">
+                    ₹{{ b.client_charge_amount|floatformat:2 }}
+                  </strong>
+                </td>
+
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <strong style="font-family:'JetBrains Mono',monospace;color:{% if b.margin >= 0 %}#059669{% else %}#dc2626{% endif %};">
+                      {% if b.margin >= 0 %}+{% endif %}₹{{ b.margin|floatformat:2 }}
+                    </strong>
+                    {% if b.client_charge_amount > 0 %}
+                      <span class="badge {% if b.margin >= 0 %}badge-success{% else %}badge-danger{% endif %}" style="font-size:9px;">
+                        {{ b.margin_percentage }}%
+                      </span>
+                    {% endif %}
+                  </div>
+                </td>
+
+                <td>
+                  {% if b.due_date %}
+                    <div style="font-size:12px;font-weight:600;color:var(--text-main);">
+                      {{ b.due_date|date:"d M Y" }}
+                    </div>
+                    {% if b.status != 'CANCELLED' %}
+                      {% if b.days_remaining < 0 %}
+                        <span class="badge badge-danger" style="font-size:10px;">Overdue {{ b.days_remaining_abs }}d</span>
+                      {% elif b.days_remaining <= 7 %}
+                        <span class="badge badge-danger" style="font-size:10px;">Due in {{ b.days_remaining }}d</span>
+                      {% elif b.days_remaining <= 30 %}
+                        <span class="badge badge-warning" style="font-size:10px;">Due in {{ b.days_remaining }}d</span>
+                      {% else %}
+                        <span style="font-size:11px;color:var(--text-dim);">in {{ b.days_remaining }}d</span>
+                      {% endif %}
+                    {% endif %}
+                  {% else %}
+                    <span style="color:var(--text-dim);">—</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if b.status == 'PAID' %}
+                    <span class="badge badge-success">✅ Paid</span>
+                  {% elif b.status == 'PENDING' %}
+                    <span class="badge badge-warning">⏳ Pending</span>
+                  {% elif b.status == 'OVERDUE' %}
+                    <span class="badge badge-danger">⚠️ Overdue</span>
+                  {% elif b.status == 'RENEWED' %}
+                    <span class="badge badge-info">🔄 Renewed</span>
+                  {% else %}
+                    <span class="badge badge-neutral">❌ Cancelled</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if b.invoice_url %}
+                    <a href="{{ b.invoice_url }}" target="_blank" style="color:#0284c7;text-decoration:none;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+                      📄 {{ b.invoice_ref|default:"View Receipt" }} ↗
+                    </a>
+                  {% elif b.invoice_ref %}
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">
+                      {{ b.invoice_ref }}
+                    </span>
+                  {% else %}
+                    <span style="color:var(--text-dim);">—</span>
+                  {% endif %}
+                  {% if b.paid_by %}
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">{{ b.paid_by }}</div>
+                  {% endif %}
+                </td>
+
+                <td style="text-align:right;white-space:nowrap;">
+                  <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="openEditModal({{ b.id }})" title="Edit details">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="deleteBill({{ b.id }}, '{{ b.service_name|escapejs }}')" title="Delete entry">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            {% empty %}
+              <tr id="empty-row">
+                <td colspan="13" style="text-align:center;padding:50px 20px;color:var(--text-dim);">
+                  <div style="font-size:40px;margin-bottom:12px;">☁️</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--text-main);margin-bottom:6px;">No Platform Bills Recorded Yet</div>
+                  <div style="font-size:13px;color:var(--text-dim);max-width:460px;margin:0 auto 20px;line-height:1.5;">
+                    Track and calculate hosting servers (AWS, DigitalOcean, Vercel), domain registrations, databases, and platform subscriptions for all your projects.
+                  </div>
+                  <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                    <span>+</span> Record First Platform Bill
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6">
+                <span id="footer-row-count">Showing {{ bills|length }} services</span>
+              </td>
+              <td>
+                <span id="footer-total-cost">₹{{ total_cost|floatformat:2 }}</span>
+              </td>
+              <td>
+                <span id="footer-total-billed" style="color:#059669;">₹{{ total_client_charge|floatformat:2 }}</span>
+              </td>
+              <td>
+                <span id="footer-net-margin" style="color:{% if net_margin >= 0 %}#059669{% else %}#dc2626{% endif %};">
+                  {% if net_margin >= 0 %}+{% endif %}₹{{ net_margin|floatformat:2 }}
+                </span>
+              </td>
+              <td colspan="4" style="text-align:right;font-size:12px;color:var(--text-dim);">
+                Calculated live on active filters
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div class="modal-overlay" id="billModal" onclick="handleBackdropClick(event)">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">
+          <span>💳</span> Record Platform / Hosting Bill
+        </h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+
+      <form id="billForm" onsubmit="handleSaveBill(event)">
+        <input type="hidden" id="formBillId" value="">
+
+        <div class="modal-body">
+          <!-- Project & Category -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Associated Project</label>
+              <select id="formProject" class="form-select">
+                <option value="">🏢 Company Wide / General (No project)</option>
+                {% for p in projects %}
+                  <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Platform Category *</label>
+              <select id="formCategory" class="form-select" required>
+                <option value="HOSTING">☁️ Hosting & Cloud Server</option>
+                <option value="DOMAIN">🌐 Domain Registration / Renewal</option>
+                <option value="DATABASE">🗄️ Database & Storage</option>
+                <option value="EMAIL_SMS">✉️ Email, SMS & WhatsApp API</option>
+                <option value="SSL_SECURITY">🔒 SSL, WAF & Security</option>
+                <option value="SOFTWARE_LICENSE">💻 Software & Tool License</option>
+                <option value="API_AI">🤖 API & AI Model Usage</option>
+                <option value="MAINTENANCE">🛠️ Maintenance & Infrastructure</option>
+                <option value="OTHER">📦 Other Platform Expense</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Service Name & Provider -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Service / Item Name *</label>
+              <input type="text" id="formServiceName" class="form-input" placeholder="e.g. AWS EC2 Production Server, Vercel Pro..." required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Platform / Provider *</label>
+              <input type="text" id="formProvider" class="form-input" list="providerList" placeholder="e.g. AWS, DigitalOcean, Namecheap, Vercel..." required>
+              <datalist id="providerList">
+                <option value="AWS">
+                <option value="DigitalOcean">
+                <option value="Vercel">
+                <option value="Namecheap">
+                <option value="Hostinger">
+                <option value="Cloudflare">
+                <option value="Google Cloud">
+                <option value="MongoDB Atlas">
+                <option value="SendGrid">
+                <option value="Twilio">
+                <option value="OpenAI">
+                <option value="Sentry">
+                <option value="GitHub">
+              </datalist>
+            </div>
+          </div>
+
+          <!-- Billing Cycle & Currency -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Billing Cycle *</label>
+              <select id="formCycle" class="form-select" required>
+                <option value="MONTHLY">Monthly (Recurring)</option>
+                <option value="YEARLY">Yearly / Annual (Recurring)</option>
+                <option value="QUARTERLY">Quarterly (Every 3 months)</option>
+                <option value="SEMI_ANNUAL">Semi-Annual (Every 6 months)</option>
+                <option value="ONE_TIME">One-Time (Fixed Expense)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Currency *</label>
+              <select id="formCurrency" class="form-select" required>
+                <option value="INR">₹ INR (Indian Rupee)</option>
+                <option value="USD">$ USD (US Dollar)</option>
+                <option value="EUR">€ EUR (Euro)</option>
+                <option value="GBP">£ GBP (British Pound)</option>
+                <option value="AED">AED (UAE Dirham)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cost Amount & Client Charge -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Vendor Cost (Expense) *</label>
+              <input type="number" step="0.01" id="formCost" class="form-input" placeholder="Amount paid to vendor, e.g. 4500.00" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Client Billed Amount (Revenue)</label>
+              <input type="number" step="0.01" id="formClientCharge" class="form-input" placeholder="Amount charged to client, e.g. 6000.00 (or 0 if not billed)">
+            </div>
+          </div>
+
+          <!-- Dates & Status -->
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Billing / Invoice Date *</label>
+              <input type="date" id="formBillingDate" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Due / Renewal Date</label>
+              <input type="date" id="formDueDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Payment Status *</label>
+              <select id="formStatus" class="form-select" required>
+                <option value="PAID">✅ Paid</option>
+                <option value="PENDING">⏳ Payment Pending</option>
+                <option value="OVERDUE">⚠️ Overdue</option>
+                <option value="RENEWED">🔄 Renewed</option>
+                <option value="CANCELLED">❌ Cancelled / Expired</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Payment Ref & Method -->
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Paid By / Card</label>
+              <input type="text" id="formPaidBy" class="form-input" placeholder="e.g. Company Card, Joel, PayPal">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Invoice # / Ref</label>
+              <input type="text" id="formInvoiceRef" class="form-input" placeholder="e.g. INV-99124">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Receipt / Invoice URL</label>
+              <input type="url" id="formInvoiceUrl" class="form-input" placeholder="https://...">
+            </div>
+          </div>
+
+          <!-- Remarks -->
+          <div class="form-group">
+            <label class="form-label">Remarks, Server Specs or Client Terms</label>
+            <textarea id="formRemarks" class="form-textarea" placeholder="e.g. 8GB RAM Ubuntu VPS, auto-renewal enabled, domain transfer key, client invoice #34..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">
+            <span>💾</span> Save Bill Information
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg"></div>
+
+  <!-- Hidden CSRF token for AJAX -->
+  {% csrf_token %}
+
+  <script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('toast-msg');
+      toast.textContent = text;
+      toast.style.borderColor = isError ? 'var(--danger)' : 'var(--primary)';
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+
+    function openAddModal() {
+      document.getElementById('modalTitle').innerHTML = '<span>💳</span> Record Platform / Hosting Bill';
+      document.getElementById('formBillId').value = '';
+      document.getElementById('formProject').value = '';
+      document.getElementById('formCategory').value = 'HOSTING';
+      document.getElementById('formServiceName').value = '';
+      document.getElementById('formProvider').value = '';
+      document.getElementById('formCycle').value = 'MONTHLY';
+      document.getElementById('formCurrency').value = 'INR';
+      document.getElementById('formCost').value = '';
+      document.getElementById('formClientCharge').value = '';
+      document.getElementById('formBillingDate').value = new Date().toISOString().split('T')[0];
+      
+      // Default due date = 30 days from now
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      document.getElementById('formDueDate').value = d.toISOString().split('T')[0];
+
+      document.getElementById('formStatus').value = 'PAID';
+      document.getElementById('formPaidBy').value = 'Company Card';
+      document.getElementById('formInvoiceRef').value = '';
+      document.getElementById('formInvoiceUrl').value = '';
+      document.getElementById('formRemarks').value = '';
+
+      document.getElementById('billModal').classList.add('active');
+    }
+
+    function openEditModal(id) {
+      const row = document.getElementById('row-' + id);
+      if (!row) return;
+
+      document.getElementById('modalTitle').innerHTML = '<span>✏️</span> Edit Platform Bill #' + id;
+      document.getElementById('formBillId').value = id;
+      document.getElementById('formProject').value = row.dataset.projectId || '';
+      document.getElementById('formCategory').value = row.dataset.category || 'HOSTING';
+      document.getElementById('formServiceName').value = row.dataset.serviceName || '';
+      document.getElementById('formProvider').value = row.dataset.provider || '';
+      document.getElementById('formCycle').value = row.dataset.cycle || 'MONTHLY';
+      document.getElementById('formCurrency').value = row.dataset.currency || 'INR';
+      document.getElementById('formCost').value = row.dataset.cost || '';
+      document.getElementById('formClientCharge').value = row.dataset.clientCharge || '';
+      document.getElementById('formBillingDate').value = row.dataset.billingDate || '';
+      document.getElementById('formDueDate').value = row.dataset.dueDate || '';
+      document.getElementById('formStatus').value = row.dataset.status || 'PAID';
+      document.getElementById('formPaidBy').value = row.dataset.paidBy || '';
+      document.getElementById('formInvoiceRef').value = row.dataset.invoiceRef || '';
+      document.getElementById('formInvoiceUrl').value = row.dataset.invoiceUrl || '';
+      document.getElementById('formRemarks').value = row.dataset.remarks || '';
+
+      document.getElementById('billModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('billModal').classList.remove('active');
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target.id === 'billModal') {
+        closeModal();
+      }
+    }
+
+    // Save or update bill via AJAX
+    function handleSaveBill(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Saving...';
+
+      const payload = {
+        id: document.getElementById('formBillId').value || null,
+        project_id: document.getElementById('formProject').value || null,
+        category: document.getElementById('formCategory').value,
+        service_name: document.getElementById('formServiceName').value.trim(),
+        provider: document.getElementById('formProvider').value.trim(),
+        billing_cycle: document.getElementById('formCycle').value,
+        currency: document.getElementById('formCurrency').value,
+        cost_amount: parseFloat(document.getElementById('formCost').value) || 0,
+        client_charge_amount: parseFloat(document.getElementById('formClientCharge').value) || 0,
+        billing_date: document.getElementById('formBillingDate').value,
+        due_date: document.getElementById('formDueDate').value || null,
+        status: document.getElementById('formStatus').value,
+        paid_by: document.getElementById('formPaidBy').value.trim(),
+        invoice_ref: document.getElementById('formInvoiceRef').value.trim(),
+        invoice_url: document.getElementById('formInvoiceUrl').value.trim(),
+        remarks: document.getElementById('formRemarks').value.trim()
+      };
+
+      fetch('api/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span> Save Bill Information';
+        if (data.success) {
+          showToast('✅ ' + data.message);
+          closeModal();
+          setTimeout(() => window.location.reload(), 600);
+        } else {
+          showToast('❌ ' + (data.error || 'Failed to save bill'), true);
+        }
+      })
+      .catch(err => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span> Save Bill Information';
+        console.error(err);
+        showToast('❌ Server error while saving', true);
+      });
+    }
+
+    // Quick Renew Bill
+    function quickRenewBill(id, serviceName, currentDueDate, cycle) {
+      let addDays = 30;
+      if (cycle === 'YEARLY') addDays = 365;
+      else if (cycle === 'QUARTERLY') addDays = 90;
+      else if (cycle === 'SEMI_ANNUAL') addDays = 180;
+
+      const base = currentDueDate ? new Date(currentDueDate) : new Date();
+      base.setDate(base.getDate() + addDays);
+      const nextDue = base.toISOString().split('T')[0];
+
+      if (!confirm(`Renew "${serviceName}"?\nThis will mark the bill as PAID/RENEWED and extend the next due date to ${nextDue}.`)) {
+        return;
+      }
+
+      fetch('api/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          id: id,
+          status: 'PAID',
+          due_date: nextDue,
+          billing_date: new Date().toISOString().split('T')[0]
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast('🔄 Successfully renewed service!');
+          setTimeout(() => window.location.reload(), 500);
+        } else {
+          showToast('❌ ' + (data.error || 'Failed to renew'), true);
+        }
+      });
+    }
+
+    // Delete Bill
+    function deleteBill(id, serviceName) {
+      if (!confirm(`Are you sure you want to delete the bill for "${serviceName}"?`)) return;
+
+      fetch(`api/delete/${id}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast('🗑️ Bill deleted');
+          const row = document.getElementById('row-' + id);
+          if (row) row.remove();
+          filterTable();
+        } else {
+          showToast('❌ ' + (data.error || 'Failed to delete'), true);
+        }
+      });
+    }
+
+    // Filter and Dynamic Calculations
+    function filterTable() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const proj = document.getElementById('filterProject').value;
+      const cat = document.getElementById('filterCategory').value;
+      const cycle = document.getElementById('filterCycle').value;
+      const status = document.getElementById('filterStatus').value;
+      const windowFilter = document.getElementById('filterWindow').value;
+
+      const rows = document.querySelectorAll('#billsTableBody tr[data-id]');
+      let visibleCount = 0;
+      let sumCost = 0;
+      let sumClientCharge = 0;
+
+      rows.forEach(row => {
+        const text = (
+          row.dataset.serviceName + ' ' +
+          row.dataset.provider + ' ' +
+          row.dataset.projectName + ' ' +
+          row.dataset.invoiceRef + ' ' +
+          row.dataset.remarks
+        ).toLowerCase();
+
+        const matchQ = !q || text.includes(q);
+        
+        let matchProj = true;
+        if (proj === 'none') {
+          matchProj = !row.dataset.projectId;
+        } else if (proj) {
+          matchProj = row.dataset.projectId === proj;
+        }
+
+        const matchCat = !cat || row.dataset.category === cat;
+        const matchCycle = !cycle || row.dataset.cycle === cycle;
+        const matchStatus = !status || row.dataset.status === status;
+
+        let matchWindow = true;
+        const days = row.dataset.daysRemaining !== '' ? parseInt(row.dataset.daysRemaining) : null;
+        if (windowFilter === 'due7') {
+          matchWindow = days !== null && days >= 0 && days <= 7;
+        } else if (windowFilter === 'due30') {
+          matchWindow = days !== null && days >= 0 && days <= 30;
+        } else if (windowFilter === 'overdue') {
+          matchWindow = days !== null && days < 0 && (row.dataset.status === 'PENDING' || row.dataset.status === 'OVERDUE');
+        }
+
+        if (matchQ && matchProj && matchCat && matchCycle && matchStatus && matchWindow) {
+          row.style.display = '';
+          visibleCount++;
+          sumCost += parseFloat(row.dataset.cost) || 0;
+          sumClientCharge += parseFloat(row.dataset.clientCharge) || 0;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Update Summary Row
+      document.getElementById('footer-row-count').innerText = `Showing ${visibleCount} of ${rows.length} services`;
+      document.getElementById('footer-total-cost').innerText = '₹' + sumCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('footer-total-billed').innerText = '₹' + sumClientCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      const sumMargin = sumClientCharge - sumCost;
+      const marginEl = document.getElementById('footer-net-margin');
+      marginEl.innerText = (sumMargin >= 0 ? '+' : '') + '₹' + sumMargin.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      marginEl.style.color = sumMargin >= 0 ? '#059669' : '#dc2626';
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterProject').value = '';
+      document.getElementById('filterCategory').value = '';
+      document.getElementById('filterCycle').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterWindow').value = '';
+      filterTable();
+    }
+  </script>
+</body>
+</html>

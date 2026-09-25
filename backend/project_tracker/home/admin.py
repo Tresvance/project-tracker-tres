@@ -3,14 +3,14 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import path
 from django.conf import settings
 from datetime import date as dt, timedelta
 import paramiko
 import threading
 from django.core.cache import cache
-from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task, ChangeRequest, ProjectLink
+from .models import Project, Timesheet, TimesheetTask, DeployScript, BankAccount, AdminLogin, Task, ChangeRequest, ProjectLink, ClientBill
 
 
 # ── Project Environment Links Inline (Tabular table to Add / Edit links) ──────
@@ -27,6 +27,69 @@ class ProjectLinkAdmin(admin.ModelAdmin):
     list_display = ('project', 'env', 'title', 'url', 'remarks')
     list_filter = ('env', 'project')
     search_fields = ('project__name', 'title', 'url', 'remarks')
+
+
+# ── Client Bill / Platform Expense Inline (for Project change view) ───────────
+class ClientBillInline(admin.TabularInline):
+    model = ClientBill
+    extra = 0
+    fields = ('service_name', 'provider', 'category', 'billing_cycle', 'cost_amount', 'client_charge_amount', 'due_date', 'status')
+    verbose_name = "Platform Bill / Hosting Expense"
+    verbose_name_plural = "Platform Bills & Hosting Expenses (AWS, Domains, Databases, etc.)"
+
+
+@admin.register(ClientBill)
+class ClientBillAdmin(admin.ModelAdmin):
+    list_display = ('service_name', 'project_display', 'provider', 'category', 'billing_cycle', 'cost_display', 'client_charge_display', 'margin_display', 'due_date_display', 'status_badge')
+    list_filter = ('category', 'status', 'billing_cycle', 'provider', 'project', 'currency')
+    search_fields = ('service_name', 'provider', 'invoice_ref', 'remarks', 'project__name')
+    date_hierarchy = 'due_date'
+
+    def project_display(self, obj):
+        if obj.project:
+            return format_html('<strong style="color:#0ea5e9;">{}</strong>', obj.project.name)
+        return format_html('<span style="color:#888;">Company Wide</span>')
+    project_display.short_description = "Project"
+
+    def cost_display(self, obj):
+        return format_html('<strong style="color:#fff;font-family:monospace;">₹{:,.2f}</strong>', obj.cost_amount or 0)
+    cost_display.short_description = "Cost"
+
+    def client_charge_display(self, obj):
+        return format_html('<strong style="color:#10b981;font-family:monospace;">₹{:,.2f}</strong>', obj.client_charge_amount or 0)
+    client_charge_display.short_description = "Billed"
+
+    def margin_display(self, obj):
+        margin = (obj.client_charge_amount or 0) - (obj.cost_amount or 0)
+        color = "#10b981" if margin >= 0 else "#ef4444"
+        pct = obj.margin_percentage
+        sign = "+" if margin >= 0 else ""
+        return format_html('<span style="color:{};font-weight:700;font-family:monospace;">{}₹{:,.2f} ({}%)</span>', color, sign, margin, pct)
+    margin_display.short_description = "Margin"
+
+    def due_date_display(self, obj):
+        if not obj.due_date:
+            return "—"
+        today = dt.today()
+        days = (obj.due_date - today).days
+        if days < 0 and obj.status in ['PENDING', 'OVERDUE']:
+            return format_html('<span style="color:#ef4444;font-weight:700;">{} (Overdue {}d)</span>', obj.due_date.strftime('%d %b %Y'), abs(days))
+        elif days <= 15:
+            return format_html('<span style="color:#f59e0b;font-weight:700;">{} (in {}d)</span>', obj.due_date.strftime('%d %b %Y'), days)
+        return obj.due_date.strftime('%d %b %Y')
+    due_date_display.short_description = "Due Date"
+
+    def status_badge(self, obj):
+        colors = {
+            'PAID': ('#10b981', 'rgba(16, 185, 129, 0.15)'),
+            'PENDING': ('#f59e0b', 'rgba(245, 158, 11, 0.15)'),
+            'OVERDUE': ('#ef4444', 'rgba(239, 68, 68, 0.15)'),
+            'RENEWED': ('#0ea5e9', 'rgba(14, 165, 233, 0.15)'),
+            'CANCELLED': ('#888888', 'rgba(136, 136, 136, 0.15)'),
+        }
+        c, bg = colors.get(obj.status, ('#888', 'rgba(0,0,0,0.1)'))
+        return format_html('<span style="background:{};color:{};border:1px solid {};padding:2px 8px;border-radius:4px;font-weight:700;font-size:11px;">{}</span>', bg, c, c, obj.get_status_display())
+    status_badge.short_description = "Status"
 
 
 # ── Deploy Script Inline (the "+ Add another" table, for LIVE scripts) ─────────
@@ -59,7 +122,7 @@ class ProjectAdminForm(forms.ModelForm):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectAdminForm
-    inlines = [ProjectLinkInline, DeployScriptInline]
+    inlines = [ProjectLinkInline, ClientBillInline, DeployScriptInline]
     change_list_template = "admin/home/project/change_list.html"
     list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
     list_filter = ('mode',)
@@ -225,6 +288,10 @@ class ProjectAdmin(admin.ModelAdmin):
             path('<int:project_id>/deploy-test/', self.admin_site.admin_view(self.deploy_test_project), name='project_deploy_test'),
             path('<int:project_id>/deploy-test/status/', self.admin_site.admin_view(self.deploy_test_status), name='project_deploy_test_status'),
             path('deploy-center/', self.admin_site.admin_view(self.deploy_center), name='project_deploy_center'),
+            path('client-bill-track/', self.admin_site.admin_view(self.client_bill_track), name='client_bill_track'),
+            path('client-bill-track/api/save/', self.admin_site.admin_view(self.client_bill_save_api), name='client_bill_save_api'),
+            path('client-bill-track/api/delete/<int:bill_id>/', self.admin_site.admin_view(self.client_bill_delete_api), name='client_bill_delete_api'),
+            path('client-bill-track/export/csv/', self.admin_site.admin_view(self.client_bill_export_csv), name='client_bill_export_csv'),
         ]
         return custom + urls
 
@@ -293,6 +360,283 @@ class ProjectAdmin(admin.ModelAdmin):
             mark_safe(options_str), obj.pk, obj.pk
         )
     report_buttons.short_description = 'Reports'
+
+    # ── Client Bill & Platform Expense Tracker Dashboard ───────────────────────
+    def client_bill_track(self, request):
+        from django.template.response import TemplateResponse
+        from datetime import date as dt
+        today = dt.today()
+
+        bills = list(ClientBill.objects.select_related('project').all().order_by('-due_date', '-billing_date', '-id'))
+        projects = list(Project.objects.all().order_by('name'))
+
+        active_bills = [b for b in bills if b.status != 'CANCELLED']
+
+        total_cost = sum(b.cost_amount for b in active_bills)
+        total_client_charge = sum(b.client_charge_amount for b in active_bills)
+        net_margin = total_client_charge - total_cost
+        margin_percentage = round((float(net_margin) / float(total_client_charge) * 100), 1) if total_client_charge > 0 else 0.0
+
+        monthly_run_rate = sum(b.monthly_cost_normalized for b in active_bills)
+        annual_run_rate = monthly_run_rate * 12
+
+        active_count = len([b for b in bills if b.status in ['PAID', 'PENDING', 'RENEWED']])
+
+        # Annotate bills with days remaining
+        upcoming_bills = []
+        for b in bills:
+            if b.due_date:
+                days = (b.due_date - today).days
+                b.days_remaining = days
+                b.days_remaining_abs = abs(days)
+                if days <= 30 and b.status in ['PAID', 'PENDING', 'OVERDUE', 'RENEWED']:
+                    upcoming_bills.append(b)
+            else:
+                b.days_remaining = None
+                b.days_remaining_abs = None
+
+        renewals_count = len(upcoming_bills)
+
+        # Project-wise breakdown
+        project_breakdown = []
+        for p in projects:
+            p_bills = [b for b in active_bills if b.project_id == p.id]
+            if p_bills:
+                p_cost = sum(b.cost_amount for b in p_bills)
+                p_monthly = sum(b.monthly_cost_normalized for b in p_bills)
+                p_annual = p_monthly * 12
+                p_charge = sum(b.client_charge_amount for b in p_bills)
+                p_margin = p_charge - p_cost
+                p_margin_pct = round((float(p_margin) / float(p_charge) * 100), 1) if p_charge > 0 else 0.0
+                project_breakdown.append({
+                    'id': p.id,
+                    'name': p.name,
+                    'services_count': len(p_bills),
+                    'total_cost': p_cost,
+                    'monthly_cost': p_monthly,
+                    'annual_cost': p_annual,
+                    'client_charge': p_charge,
+                    'net_margin': p_margin,
+                    'margin_pct': p_margin_pct,
+                })
+
+        # Company-wide bills (project is None)
+        cw_bills = [b for b in active_bills if b.project_id is None]
+        if cw_bills:
+            cw_cost = sum(b.cost_amount for b in cw_bills)
+            cw_monthly = sum(b.monthly_cost_normalized for b in cw_bills)
+            cw_charge = sum(b.client_charge_amount for b in cw_bills)
+            cw_margin = cw_charge - cw_cost
+            cw_margin_pct = round((float(cw_margin) / float(cw_charge) * 100), 1) if cw_charge > 0 else 0.0
+            project_breakdown.append({
+                'id': None,
+                'name': 'Company Wide / General',
+                'services_count': len(cw_bills),
+                'total_cost': cw_cost,
+                'monthly_cost': cw_monthly,
+                'annual_cost': cw_monthly * 12,
+                'client_charge': cw_charge,
+                'net_margin': cw_margin,
+                'margin_pct': cw_margin_pct,
+            })
+
+        # Category breakdown with color tags
+        cat_meta = {
+            'HOSTING': ('☁️ Hosting & Cloud', '#0ea5e9'),
+            'DOMAIN': ('🌐 Domain Registration', '#10b981'),
+            'DATABASE': ('🗄️ Database & Storage', '#8b5cf6'),
+            'EMAIL_SMS': ('✉️ Email, SMS & WhatsApp', '#f59e0b'),
+            'SSL_SECURITY': ('🔒 SSL & Security', '#06b6d4'),
+            'SOFTWARE_LICENSE': ('💻 Software Licenses', '#ec4899'),
+            'API_AI': ('🤖 API & AI Usage', '#6366f1'),
+            'MAINTENANCE': ('🛠️ Infrastructure Support', '#64748b'),
+            'OTHER': ('📦 Other Platform Cost', '#71717a'),
+        }
+
+        category_breakdown = []
+        for cat_code, (cat_label, color) in cat_meta.items():
+            cat_bills = [b for b in active_bills if b.category == cat_code]
+            if cat_bills:
+                c_cost = sum(b.cost_amount for b in cat_bills)
+                c_monthly = sum(b.monthly_cost_normalized for b in cat_bills)
+                c_pct = round((float(c_cost) / float(total_cost) * 100), 1) if total_cost > 0 else 0.0
+                category_breakdown.append({
+                    'code': cat_code,
+                    'label': cat_label,
+                    'color': color,
+                    'count': len(cat_bills),
+                    'total_cost': c_cost,
+                    'monthly_cost': c_monthly,
+                    'pct': c_pct,
+                })
+
+        category_breakdown.sort(key=lambda x: x['total_cost'], reverse=True)
+
+        context = {
+            'bills': bills,
+            'projects': projects,
+            'total_cost': total_cost,
+            'total_client_charge': total_client_charge,
+            'net_margin': net_margin,
+            'margin_percentage': margin_percentage,
+            'monthly_run_rate': monthly_run_rate,
+            'annual_run_rate': annual_run_rate,
+            'active_count': active_count,
+            'renewals_count': renewals_count,
+            'upcoming_bills': upcoming_bills,
+            'project_breakdown': project_breakdown,
+            'category_breakdown': category_breakdown,
+        }
+        return TemplateResponse(request, 'admin/home/project/client_bill_track.html', context)
+
+    def client_bill_save_api(self, request):
+        if request.method != 'POST':
+            return JsonResponse({'success': False, 'error': 'POST method required.'}, status=405)
+
+        import json
+        from datetime import date as dt
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else request.POST.dict()
+        except Exception:
+            data = request.POST.dict()
+
+        def _to_float(v, default=0.0):
+            if v is None or v == '':
+                return default
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return default
+
+        bill_id = data.get('id')
+        project_id = data.get('project_id')
+        
+        if bill_id:
+            try:
+                bill = ClientBill.objects.get(pk=bill_id)
+            except ClientBill.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Bill record not found.'}, status=404)
+        else:
+            bill = ClientBill()
+            bill.billing_date = dt.today()
+
+        # Update fields if provided
+        if 'service_name' in data and data['service_name'].strip():
+            bill.service_name = data['service_name'].strip()
+        elif not bill_id:
+            return JsonResponse({'success': False, 'error': 'Service / Item Name is required.'}, status=400)
+
+        if 'provider' in data and data['provider'].strip():
+            bill.provider = data['provider'].strip()
+        elif not bill_id:
+            return JsonResponse({'success': False, 'error': 'Platform / Provider is required.'}, status=400)
+
+        if 'category' in data and data['category']:
+            bill.category = data['category']
+
+        if 'billing_cycle' in data and data['billing_cycle']:
+            bill.billing_cycle = data['billing_cycle']
+
+        if 'currency' in data and data['currency']:
+            bill.currency = data['currency']
+
+        if 'cost_amount' in data:
+            bill.cost_amount = _to_float(data['cost_amount'], bill.cost_amount or 0.0)
+
+        if 'client_charge_amount' in data:
+            bill.client_charge_amount = _to_float(data['client_charge_amount'], bill.client_charge_amount or 0.0)
+
+        if 'billing_date' in data and data['billing_date']:
+            bill.billing_date = data['billing_date']
+
+        if 'due_date' in data:
+            d_val = data['due_date']
+            bill.due_date = d_val if (d_val and str(d_val).strip()) else None
+
+        if 'status' in data and data['status']:
+            bill.status = data['status']
+
+        if 'paid_by' in data:
+            bill.paid_by = (data['paid_by'] or '').strip()
+
+        if 'invoice_ref' in data:
+            bill.invoice_ref = (data['invoice_ref'] or '').strip()
+
+        if 'invoice_url' in data:
+            bill.invoice_url = (data['invoice_url'] or '').strip()
+
+        if 'remarks' in data:
+            bill.remarks = (data['remarks'] or '').strip()
+
+        if 'project_id' in data:
+            p_val = data['project_id']
+            if p_val and str(p_val).strip() and str(p_val).lower() != 'none':
+                try:
+                    bill.project = Project.objects.get(pk=p_val)
+                except Project.DoesNotExist:
+                    bill.project = None
+            else:
+                bill.project = None
+
+        try:
+            bill.save()
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': f"Failed to save bill: {str(e)}"}, status=400)
+
+        msg = f"Successfully updated bill for '{bill.service_name}'" if bill_id else f"Successfully recorded new bill for '{bill.service_name}'"
+        return JsonResponse({'success': True, 'id': bill.id, 'message': msg})
+
+    def client_bill_delete_api(self, request, bill_id):
+        if request.method != 'POST':
+            return JsonResponse({'success': False, 'error': 'POST required.'}, status=405)
+        try:
+            bill = ClientBill.objects.get(pk=bill_id)
+            name = bill.service_name
+            bill.delete()
+            return JsonResponse({'success': True, 'message': f"Bill '{name}' deleted."})
+        except ClientBill.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Bill not found.'}, status=404)
+
+    def client_bill_export_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        bills = ClientBill.objects.select_related('project').all().order_by('-due_date')
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="tresvance_client_platform_bills.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Bill ID', 'Project', 'Service / Item Name', 'Provider', 'Category',
+            'Billing Cycle', 'Vendor Cost (Expense)', 'Client Charge (Revenue)',
+            'Net Margin', 'Profit %', 'Currency', 'Billing Date', 'Due / Renewal Date',
+            'Status', 'Paid By', 'Invoice Ref', 'Remarks'
+        ])
+
+        for b in bills:
+            proj_name = b.project.name if b.project else 'Company Wide'
+            margin = (b.client_charge_amount or 0) - (b.cost_amount or 0)
+            writer.writerow([
+                b.id,
+                proj_name,
+                b.service_name,
+                b.provider,
+                b.get_category_display(),
+                b.get_billing_cycle_display(),
+                f"{b.cost_amount:.2f}",
+                f"{b.client_charge_amount:.2f}",
+                f"{margin:.2f}",
+                f"{b.margin_percentage}%",
+                b.currency,
+                b.billing_date,
+                b.due_date or '',
+                b.get_status_display(),
+                b.paid_by,
+                b.invoice_ref,
+                b.remarks
+            ])
+
+        return response
 
 
     # ── Deploy Center (standalone dashboard page) ──────────────────────────────
