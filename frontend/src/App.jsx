@@ -42,8 +42,8 @@ function SearchIcon({ size = 18, color }) {
 
 // -- Brand Logo --
 function TresvanceLogo({ size = 22, light = false }) {
-  const textColor = light ? "#2b2520" : "#fff";
-  const vColor = light ? "#332b25" : "#29ABE2";
+  const textColor = light ? "#0f172a" : "#fff";
+  const vColor = light ? "#0284c7" : "#29ABE2";
   return (
     <svg width={size * 4.5} height={size} viewBox="0 0 180 40" fill="none" style={{ cursor: "pointer" }}>
       <text x="0" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="300" fill={textColor}>tres</text>
@@ -92,19 +92,19 @@ const getEnvBadgeInfo = (env = "", title = "") => {
 
   if (e === "prod" || t.includes("prod") || t.includes("live")) {
     return {
-      bg: "#edf5ee",
-      border: "#c8e2cc",
-      text: "#1e4d2b",
-      dot: "#2e7d32",
+      bg: "#f0fdfa",
+      border: "#99f6e4",
+      text: "#0f766e",
+      dot: "#0d9488",
       icon: "",
       label: "Live / Production"
     };
   }
   if (e === "test" || t.includes("test") || t.includes("qa")) {
     return {
-      bg: "#fdf5ea",
-      border: "#f9e2bf",
-      text: "#854d14",
+      bg: "#fffbeb",
+      border: "#fde68a",
+      text: "#b45309",
       dot: "#d97706",
       icon: "",
       label: "Test Server"
@@ -112,29 +112,29 @@ const getEnvBadgeInfo = (env = "", title = "") => {
   }
   if (e === "dev" || t.includes("dev") || t.includes("local")) {
     return {
-      bg: "#eef5fa",
-      border: "#cbe0ef",
-      text: "#234d70",
-      dot: "#2b6cb0",
+      bg: "#f0f9ff",
+      border: "#bae6fd",
+      text: "#0369a1",
+      dot: "#0284c7",
       icon: "",
       label: "Development"
     };
   }
   if (e === "staging" || t.includes("staging")) {
     return {
-      bg: "#f8f2fc",
-      border: "#e7d5f5",
-      text: "#5b3777",
+      bg: "#f5f3ff",
+      border: "#ddd6fe",
+      text: "#6d28d9",
       dot: "#7c3aed",
       icon: "",
       label: "Staging"
     };
   }
   return {
-    bg: "#f2eee6",
-    border: "#ded7cb",
-    text: "#5c544c",
-    dot: "#8a8177",
+    bg: "#f8fafc",
+    border: "#cbd5e1",
+    text: "#475569",
+    dot: "#64748b",
     icon: "",
     label: "Link"
   };
@@ -1037,25 +1037,25 @@ Project Image Data: ${projImageBase64 || ""}
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
       
-      {/* ── View A: PORTAL VIEW (Creamy Eye-Friendly Theme) ────────────────── */}
+      {/* ── View A: PORTAL VIEW (Cool Slate & Zinc Nordic Minimalist Theme) ────────────────── */}
       {view === "portal" && (
-        <div style={{ minHeight: "100vh", background: "#f7f4ee", color: "#2b2520" }}>
-          <header style={{ background: "#fffdfa", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid #e2dcce", boxShadow: "0 1px 3px rgba(43,37,32,0.03)" }}>
+        <div style={{ minHeight: "100vh", background: "#f1f5f9", color: "#0f172a" }}>
+          <header style={{ background: "#ffffff", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid #cbd5e1", boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", height: 58 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <TresvanceLogo size={22} light={true} />
-                <div style={{ width: 1, height: 20, background: "#e2dcce" }} />
-                <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: "#8c8277", fontWeight: 600 }}>Softwares</span>
+                <div style={{ width: 1, height: 20, background: "#cbd5e1" }} />
+                <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: "#64748b", fontWeight: 600 }}>Softwares</span>
               </div>
               
               <button onClick={handleDashboardClick}
                 style={{
-                  background: "#332b25", color: "#fffdfa", border: "1px solid #332b25",
+                  background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
                   padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
-                  boxShadow: "0 1px 3px rgba(51,43,37,0.12)"
+                  boxShadow: "0 1px 3px rgba(15,23,42,0.12)"
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = "#221c17"}
-                onMouseLeave={e => e.currentTarget.style.background = "#332b25"}>
+                onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
+                onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
                 PM Dashboard
               </button>
             </div>
@@ -1064,13 +1064,13 @@ Project Image Data: ${projImageBase64 || ""}
           <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontSize: 26, fontWeight: 700, color: "#2b2520", margin: 0 }}>Projects</h1>
-                <p style={{ fontSize: 13, color: "#6e645a", marginTop: 4 }}>All active projects at Tresvance Softwares</p>
+                <h1 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", margin: 0 }}>Projects</h1>
+                <p style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>All active projects at Tresvance Softwares</p>
               </div>
               <input
                 type="text" placeholder="Search projects..."
                 value={search} onChange={(e) => setSearch(e.target.value)}
-                style={{ border: "1px solid #ded7c9", borderRadius: 7, padding: "9px 14px", fontSize: 13, width: 220, background: "#fffdfa", color: "#2b2520", outline: "none", boxShadow: "0 1px 2px rgba(43,37,32,0.02)" }}
+                style={{ border: "1px solid #cbd5e1", borderRadius: 7, padding: "9px 14px", fontSize: 13, width: 220, background: "#ffffff", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
               />
             </div>
 
@@ -1079,10 +1079,10 @@ Project Image Data: ${projImageBase64 || ""}
             ) : filteredProjects.length === 0 ? (
               <div style={emptyBox}>No projects found</div>
             ) : (
-              <div style={{ background: "#fffdfa", border: "1px solid #e2dcce", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(43,37,32,0.04)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", background: "#f4f0e6", borderBottom: "1px solid #e2dcce" }}>
+              <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,23,42,0.05)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", background: "#f8fafc", borderBottom: "1px solid #cbd5e1" }}>
                   {["Project Name", "Environments & Links", "Version", "Remarks"].map((h) => (
-                    <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "#8c8277" }}>{h}</div>
+                    <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "#64748b" }}>{h}</div>
                   ))}
                 </div>
 
@@ -1093,18 +1093,18 @@ Project Image Data: ${projImageBase64 || ""}
 
                   return (
                     <div key={project.id}
-                      style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", borderBottom: "1px solid #f0ebe1", background: i % 2 === 0 ? "#fffdfa" : "#faf8f2", transition: "background .15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f2ece0"}
-                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#fffdfa" : "#faf8f2"}>
+                      style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", borderBottom: "1px solid #e2e8f0", background: i % 2 === 0 ? "#ffffff" : "#f8fafc", transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
+                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#ffffff" : "#f8fafc"}>
 
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4a3e35", flexShrink: 0 }} />
-                        <span style={{ fontSize: 14, fontWeight: 600, color: "#2b2520" }}>{project.name}</span>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#334155", flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{project.name}</span>
                       </div>
 
                       <div style={{ padding: "12px 18px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 7, minWidth: 0 }}>
                         {rawLinks.length === 0 ? (
-                          <span style={{ color: "#b5ac9e", fontSize: 13 }}>—</span>
+                          <span style={{ color: "#94a3b8", fontSize: 13 }}>—</span>
                         ) : (
                           rawLinks.map((link, lIdx) => {
                             const b = getEnvBadgeInfo(link.env, link.title);
@@ -1142,7 +1142,7 @@ Project Image Data: ${projImageBase64 || ""}
                                   title={link.url}
                                   style={{
                                     fontSize: 12,
-                                    color: "#234d70",
+                                    color: "#0369a1",
                                     textDecoration: "none",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
@@ -1156,11 +1156,11 @@ Project Image Data: ${projImageBase64 || ""}
                                     flexShrink: 1
                                   }}
                                   onMouseEnter={e => {
-                                    e.currentTarget.style.color = "#16344d";
+                                    e.currentTarget.style.color = "#075985";
                                     e.currentTarget.style.textDecoration = "underline";
                                   }}
                                   onMouseLeave={e => {
-                                    e.currentTarget.style.color = "#234d70";
+                                    e.currentTarget.style.color = "#0369a1";
                                     e.currentTarget.style.textDecoration = "none";
                                   }}>
                                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1177,9 +1177,9 @@ Project Image Data: ${projImageBase64 || ""}
                                 {linkNote ? (
                                   <span style={{
                                     fontSize: 11,
-                                    color: "#5e554d",
-                                    background: "#f0ebe1",
-                                    border: "1px solid #e2dcce",
+                                    color: "#475569",
+                                    background: "#f1f5f9",
+                                    border: "1px solid #cbd5e1",
                                     padding: "1px 8px",
                                     borderRadius: 4,
                                     whiteSpace: "nowrap",
@@ -1201,11 +1201,11 @@ Project Image Data: ${projImageBase64 || ""}
                       </div>
 
                       <div style={{ padding: "14px 10px", display: "flex", alignItems: "center" }}>
-                        <span style={{ fontSize: 11, color: "#5e554d", background: "#f0ebe1", border: "1px solid #e2dcce", borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>v{project.version}</span>
+                        <span style={{ fontSize: 11, color: "#475569", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>v{project.version}</span>
                       </div>
 
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "flex-start" }}>
-                        <span style={{ fontSize: 13, color: "#5e554d", lineHeight: 1.5, wordBreak: "break-word" }}>
+                        <span style={{ fontSize: 13, color: "#475569", lineHeight: 1.5, wordBreak: "break-word" }}>
                           {(() => {
                             const remText = project.remarks || "";
                             const cleanText = remText.replace(/\r?\n/g, " ");
@@ -1214,13 +1214,13 @@ Project Image Data: ${projImageBase64 || ""}
                                 <span>
                                   {cleanText.substring(0, 50)}...{" "}
                                   <button onClick={() => setRemarksModalText(project.remarks)}
-                                    style={{ background: "none", border: "none", color: "#234d70", padding: 0, fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
+                                    style={{ background: "none", border: "none", color: "#0369a1", padding: 0, fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
                                     Read More
                                   </button>
                                 </span>
                               );
                             }
-                            return cleanText || <span style={{ color: "#b5ac9e" }}>—</span>;
+                            return cleanText || <span style={{ color: "#94a3b8" }}>—</span>;
                           })()}
                         </span>
                       </div>
@@ -1228,7 +1228,7 @@ Project Image Data: ${projImageBase64 || ""}
                   );
                 })}
 
-                <div style={{ padding: "10px 18px", background: "#f4f0e6", borderTop: "1px solid #e2dcce", fontSize: 12, color: "#8c8277" }}>
+                <div style={{ padding: "10px 18px", background: "#f8fafc", borderTop: "1px solid #cbd5e1", fontSize: 12, color: "#64748b" }}>
                   {filteredProjects.length} project{filteredProjects.length !== 1 ? "s" : ""}
                 </div>
               </div>
@@ -1783,9 +1783,9 @@ Project Image Data: ${projImageBase64 || ""}
                                   </td>
                                   <td style={{ padding: "14px 20px" }}>
                                     <span style={{
-                                      background: project.is_visible_in_list !== false ? "#f4f1eb" : "#f1f5f9",
-                                      color: project.is_visible_in_list !== false ? "#2b2520" : "#94a3b8",
-                                      border: `1px solid ${project.is_visible_in_list !== false ? "#d8d1c4" : "#e2e8f0"}`,
+                                      background: project.is_visible_in_list !== false ? "#f0fdfa" : "#f1f5f9",
+                                      color: project.is_visible_in_list !== false ? "#0f766e" : "#64748b",
+                                      border: `1px solid ${project.is_visible_in_list !== false ? "#99f6e4" : "#cbd5e1"}`,
                                       padding: "3px 9px",
                                       borderRadius: 12,
                                       fontSize: 10,
@@ -2300,16 +2300,16 @@ Project Image Data: ${projImageBase64 || ""}
                           justifyContent: "space-between",
                           padding: "12px 16px",
                           borderRadius: 8,
-                          background: projIsVisibleInList ? "#fcfbf7" : "#faf9f6",
-                          border: `1px solid ${projIsVisibleInList ? "#d5cdbd" : "#e2dcce"}`,
+                          background: projIsVisibleInList ? "#f8fafc" : "#f1f5f9",
+                          border: `1px solid ${projIsVisibleInList ? "#cbd5e1" : "#e2e8f0"}`,
                           marginTop: 4,
                           transition: "all 0.2s ease"
                         }}>
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#2b2520" }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
                               {projIsVisibleInList ? "Visible in Project List" : "Hidden from Project List"}
                             </div>
-                            <div style={{ fontSize: 11, color: "#8c8277", marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
                               {projIsVisibleInList
                                 ? "This project appears in the public project list portal."
                                 : "This project is hidden from the public project list portal."}
@@ -2328,7 +2328,7 @@ Project Image Data: ${projImageBase64 || ""}
                               left: 0,
                               right: 0,
                               bottom: 0,
-                              backgroundColor: projIsVisibleInList ? "#2b2520" : "#d0c9bc",
+                              backgroundColor: projIsVisibleInList ? "#1e293b" : "#cbd5e1",
                               borderRadius: 24,
                               transition: "0.2s"
                             }}>
@@ -2338,10 +2338,10 @@ Project Image Data: ${projImageBase64 || ""}
                                 width: 18,
                                 left: projIsVisibleInList ? 23 : 3,
                                 bottom: 3,
-                                backgroundColor: "#fffdfa",
+                                backgroundColor: "#ffffff",
                                 borderRadius: "50%",
                                 transition: "0.2s",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                                boxShadow: "0 1px 3px rgba(15,23,42,0.15)"
                               }} />
                             </span>
                           </label>
