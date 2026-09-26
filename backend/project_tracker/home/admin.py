@@ -124,26 +124,27 @@ class ProjectAdmin(admin.ModelAdmin):
     form = ProjectAdminForm
     inlines = [ProjectLinkInline, ClientBillInline, DeployScriptInline]
     change_list_template = "admin/home/project/change_list.html"
-    list_display = ('name', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
-    list_filter = ('mode',)
+    list_display = ('name', 'is_visible_in_list', 'mode', 'version', 'hourly_rate_display', 'total_timesheets', 'total_hours_logged', 'total_billed', 'active_script_display', 'report_buttons')
+    list_editable = ('is_visible_in_list',)
+    list_filter = ('is_visible_in_list', 'mode')
     search_fields = ('name', 'remarks')
     fieldsets = (
-        ('Project Info', {'fields': ('name', 'mode', 'version', 'url', 'remarks')}),
+        ('Project Info', {'fields': ('name', 'is_visible_in_list', 'mode', 'version', 'url', 'remarks')}),
         ('Billing Rate', {
             'fields': ('hourly_rate',),
-            'description': '⚙️ Set the hourly rate (₹) for this project. Employees will NOT see this rate.'
+            'description': 'Set the hourly rate (₹) for this project. Employees will NOT see this rate.'
         }),
         ('GitHub Integration', {
             'fields': ('github_repo',),
-            'description': '🔗 GitHub repository path in "owner/repo" format, e.g. "myorg/myrepo".'
+            'description': 'GitHub repository path in "owner/repo" format, e.g. "myorg/myrepo".'
         }),
         ('Live Deployment', {
             'fields': ('active_deploy_script',),
-            'description': '🚀 Add live deploy scripts below (save first if this is a new project), then pick which one runs. Go to the Deploy Center (button on project list) to actually run deploys.'
+            'description': 'Add live deploy scripts below (save first if this is a new project), then pick which one runs. Go to the Deploy Center (button on project list) to actually run deploys.'
         }),
         ('Test Server Deployment', {
             'fields': ('test_deploy_command',),
-            'description': '🧪 Single command for deploying to the TEST server. No multiple scripts — just one command.'
+            'description': 'Single command for deploying to the TEST server. No multiple scripts — just one command.'
         }),
     )
 

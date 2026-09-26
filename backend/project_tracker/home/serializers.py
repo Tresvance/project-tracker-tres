@@ -7,7 +7,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Project
-        fields = ['id', 'name', 'mode', 'version', 'url', 'links', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'test_deploy_interactive', 'deploy_command']
+        fields = ['id', 'name', 'mode', 'version', 'url', 'links', 'remarks', 'hourly_rate', 'github_repo', 'test_deploy_command', 'test_deploy_interactive', 'deploy_command', 'is_visible_in_list']
 
     def get_links(self, obj):
         links = obj.project_links.all().order_by('id')

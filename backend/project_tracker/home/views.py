@@ -37,6 +37,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         test_deploy_command = data.get("test_deploy_command", "")
         deploy_command = data.get("deploy_command", "")
         github_repo = data.get("github_repo", "")
+        is_visible_in_list = data.get("is_visible_in_list", True)
+        if isinstance(is_visible_in_list, str):
+            is_visible_in_list = is_visible_in_list.lower() not in ("false", "0", "no")
         
         project = Project.objects.create(
             name=name,
@@ -48,7 +51,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
             hourly_rate=hourly_rate,
             test_deploy_command=test_deploy_command,
             deploy_command=deploy_command,
-            github_repo=github_repo
+            github_repo=github_repo,
+            is_visible_in_list=bool(is_visible_in_list),
         )
         
         deploy_scripts_data = data.get("deploy_scripts", [])

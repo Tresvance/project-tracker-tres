@@ -33,6 +33,11 @@ class Project(models.Model):
     name        = models.CharField(max_length=200)
     mode        = models.CharField(max_length=10, choices=MODE_CHOICES, default="DEV")
     version     = models.CharField(max_length=50, blank=True)
+    is_visible_in_list = models.BooleanField(
+        default=True,
+        verbose_name="Visible in Project List",
+        help_text="Show this project on the frontend project list page."
+    )
     url         = models.URLField(blank=True)
     links       = models.JSONField(
         default=list,

@@ -198,6 +198,7 @@ export default function App() {
   const [linkInputUrl, setLinkInputUrl] = useState("");
   const [linkInputEnv, setLinkInputEnv] = useState("test");
   const [linkInputNote, setLinkInputNote] = useState("");
+  const [projIsVisibleInList, setProjIsVisibleInList] = useState(true);
 
 
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -515,6 +516,7 @@ export default function App() {
     setLinkInputNote("");
     setProjImageName("");
     setProjImageBase64("");
+    setProjIsVisibleInList(true);
     setIsEditingProject(false);
     setProjectEditingId(null);
   };
@@ -558,6 +560,7 @@ export default function App() {
     setLinkInputNote("");
     setProjImageName(details.imageName || "");
     setProjImageBase64(details.imageBase64 || "");
+    setProjIsVisibleInList(project.is_visible_in_list !== undefined ? project.is_visible_in_list : true);
 
     setIsEditingProject(true);
     setProjectEditingId(project.id);
@@ -932,7 +935,8 @@ Project Image Data: ${projImageBase64 || ""}
       url: primaryUrl,
       links: projLinks,
       remarks: richRemarks,
-      hourly_rate: 0
+      hourly_rate: 0,
+      is_visible_in_list: projIsVisibleInList
     };
 
     const request = isEditingProject 
@@ -1019,6 +1023,7 @@ Project Image Data: ${projImageBase64 || ""}
   };
 
   const filteredProjects = projects.filter(p => {
+    if (p.is_visible_in_list === false) return false;
     const q = search.toLowerCase();
     const matchesName = p.name?.toLowerCase().includes(q);
     const matchesMode = p.mode?.toLowerCase().includes(q);
@@ -1729,6 +1734,7 @@ Project Image Data: ${projImageBase64 || ""}
                               <th style={{ padding: "14px 20px" }}>Project Manager</th>
                               <th style={{ padding: "14px 20px" }}>Priority</th>
                               <th style={{ padding: "14px 20px" }}>Mode</th>
+                              <th style={{ padding: "14px 20px" }}>Portal Visibility</th>
                               <th style={{ padding: "14px 20px" }}>Timeline</th>
                               <th style={{ padding: "14px 20px" }}>Budget</th>
                               <th style={{ padding: "14px 20px" }}>Actions</th>
@@ -1775,14 +1781,34 @@ Project Image Data: ${projImageBase64 || ""}
                                       {modeVal}
                                     </span>
                                   </td>
+                                  <td style={{ padding: "14px 20px" }}>
+                                    <span style={{
+                                      background: project.is_visible_in_list !== false ? "#f4f1eb" : "#f1f5f9",
+                                      color: project.is_visible_in_list !== false ? "#2b2520" : "#94a3b8",
+                                      border: `1px solid ${project.is_visible_in_list !== false ? "#d8d1c4" : "#e2e8f0"}`,
+                                      padding: "3px 9px",
+                                      borderRadius: 12,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      letterSpacing: 0.4
+                                    }}>
+                                      {project.is_visible_in_list !== false ? "Visible" : "Hidden"}
+                                    </span>
+                                  </td>
                                   <td style={{ padding: "14px 20px", color: "#475569" }}>
                                     {formatDateStr(project.start_date)} - {formatDateStr(project.end_date)}
                                   </td>
                                   <td style={{ padding: "14px 20px", fontWeight: 700, color: "#166534" }}>{project.budget}</td>
                                   <td style={{ padding: "14px 20px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                      <span onClick={() => { setSelectedProject(project); setActiveTab("project_details"); }} title="View Details" style={{ cursor: "pointer", fontSize: 15 }}>👁️</span>
-                                      <span style={{ cursor: "pointer", fontSize: 15, color: "#94a3b8" }}>⋮</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                      <button onClick={() => { setSelectedProject(project); setActiveTab("project_details"); }}
+                                        style={{ background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "3px 8px", fontSize: 11, fontWeight: 600, color: "#00a2e8", cursor: "pointer" }}>
+                                        View
+                                      </button>
+                                      <button onClick={() => handleEditProjectClick(project)}
+                                        style={{ background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "3px 8px", fontSize: 11, fontWeight: 600, color: "#475569", cursor: "pointer" }}>
+                                        Edit
+                                      </button>
                                     </div>
                                   </td>
                                 </tr>
@@ -2191,7 +2217,7 @@ Project Image Data: ${projImageBase64 || ""}
                   )}
                   {formErrorMessage && (
                     <div style={{ background: "#fef2f2", border: "1px solid #ef4444", color: "#991b1b", padding: 12, borderRadius: 6, fontSize: 13, fontWeight: "bold", margin: "20px 0" }}>
-                      ⚠️ Error: {formErrorMessage}
+                      Error: {formErrorMessage}
                     </div>
                   )}
 
@@ -2241,10 +2267,10 @@ Project Image Data: ${projImageBase64 || ""}
                         <div style={fieldGroupStyle}>
                           <label style={fieldLabelStyle}>Priority *</label>
                           <select value={projPriority} onChange={e => setProjPriority(e.target.value)} style={lightSelectStyle}>
-                            <option value="Low">🟢 Low</option>
-                            <option value="Medium">🟡 Medium</option>
-                            <option value="High">🟠 High</option>
-                            <option value="Critical">🔴 Critical</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
                           </select>
                         </div>
 
@@ -2264,6 +2290,63 @@ Project Image Data: ${projImageBase64 || ""}
                     {/* Right Column: Project Settings */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                       <h3 style={sectionTitleStyle}>Project Settings</h3>
+
+                      {/* Project Visibility Toggle */}
+                      <div style={fieldGroupStyle}>
+                        <label style={fieldLabelStyle}>Visibility in Project List</label>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 16px",
+                          borderRadius: 8,
+                          background: projIsVisibleInList ? "#fcfbf7" : "#faf9f6",
+                          border: `1px solid ${projIsVisibleInList ? "#d5cdbd" : "#e2dcce"}`,
+                          marginTop: 4,
+                          transition: "all 0.2s ease"
+                        }}>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#2b2520" }}>
+                              {projIsVisibleInList ? "Visible in Project List" : "Hidden from Project List"}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#8c8277", marginTop: 2 }}>
+                              {projIsVisibleInList
+                                ? "This project appears in the public project list portal."
+                                : "This project is hidden from the public project list portal."}
+                            </div>
+                          </div>
+                          <label style={{ position: "relative", display: "inline-block", width: 44, height: 24, cursor: "pointer", margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={projIsVisibleInList}
+                              onChange={e => setProjIsVisibleInList(e.target.checked)}
+                              style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+                            />
+                            <span style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: projIsVisibleInList ? "#2b2520" : "#d0c9bc",
+                              borderRadius: 24,
+                              transition: "0.2s"
+                            }}>
+                              <span style={{
+                                position: "absolute",
+                                height: 18,
+                                width: 18,
+                                left: projIsVisibleInList ? 23 : 3,
+                                bottom: 3,
+                                backgroundColor: "#fffdfa",
+                                borderRadius: "50%",
+                                transition: "0.2s",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                              }} />
+                            </span>
+                          </label>
+                        </div>
+                      </div>
 
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Project Type</label>
