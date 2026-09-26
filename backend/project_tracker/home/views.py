@@ -1,3 +1,9 @@
+from urllib.parse import quote
+from django.contrib.auth.views import LoginView
+from django.contrib.auth import login as auth_login
+from django.contrib.admin.forms import AdminAuthenticationForm
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Project, Timesheet, TimesheetTask, DeployScript, Task, AdminLogin, ChangeRequest
@@ -17,6 +23,56 @@ from django.core.cache import cache
 from django.conf import settings
 import requests
 import re
+
+
+class CustomAdminLoginView(LoginView):
+    template_name = 'admin/login.html'
+    authentication_form = AdminAuthenticationForm
+    redirect_authenticated_user = False
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_superuser:
+                return HttpResponseRedirect(reverse('admin:index'))
+            else:
+                user_name = request.user.first_name or request.user.username
+                host = request.get_host()
+                referer = request.META.get('HTTP_REFERER', '')
+                if '8000' in host and '5173' not in referer and '5173' not in host:
+                    frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                    return HttpResponseRedirect(f"{frontend_base}/?view=dashboard&auth=1&name={quote(user_name)}")
+                return HttpResponseRedirect(f"/?view=dashboard&auth=1&name={quote(user_name)}")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        """Log user in and redirect based on role."""
+        user = form.get_user()
+        auth_login(self.request, user)
+
+        if user.is_superuser:
+            next_url = self.request.POST.get('next') or self.request.GET.get('next')
+            if next_url and next_url != '/admin/login/':
+                return HttpResponseRedirect(next_url)
+            return HttpResponseRedirect(reverse('admin:index'))
+
+        user_name = user.first_name or user.username
+        host = self.request.get_host()
+        referer = self.request.META.get('HTTP_REFERER', '')
+        if '8000' in host and '5173' not in referer and '5173' not in host:
+            frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            return HttpResponseRedirect(f"{frontend_base}/?view=dashboard&auth=1&name={quote(user_name)}")
+
+        return HttpResponseRedirect(f"/?view=dashboard&auth=1&name={quote(user_name)}")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'title': 'Log in',
+            'site_title': 'Tresvance Project Tracker',
+            'site_header': 'Tresvance Softwares',
+        })
+        return context
+
 
 
 

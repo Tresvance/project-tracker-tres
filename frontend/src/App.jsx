@@ -156,7 +156,7 @@ const getShortLabel = (title = "", env = "") => {
 export default function App() {
   const [view, setView] = useState(() => localStorage.getItem("app_view") || "portal"); // "portal" or "dashboard"
   const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, projects, tasks, add_project
-  
+
   // Database States
   const [projects, setProjects] = useState([]);
   const [timesheets, setTimesheets] = useState([]);
@@ -226,7 +226,7 @@ export default function App() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("Frontend Developer");
   const [detailsActiveTab, setDetailsActiveTab] = useState("Overview");
-  
+
   const [selectedTask, setSelectedTask] = useState(null);
   const [loggedActualHours, setLoggedActualHours] = useState("");
   const [taskDetailsChecklistInput, setTaskDetailsChecklistInput] = useState("");
@@ -256,7 +256,7 @@ export default function App() {
 
   // Progressive Web App (PWA) states
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isStandalone, setIsStandalone] = useState(() => 
+  const [isStandalone, setIsStandalone] = useState(() =>
     typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true)
   );
   const [isOnline, setIsOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
@@ -273,7 +273,7 @@ export default function App() {
         setProjects(projRes.data);
         setTimesheets(tsRes.data);
         setTeamMembers(teamRes.data);
-        
+
         const cards = taskRes.data.map((task) => {
           const projectSlug = task.project_name ? task.project_name.substring(0, 3).toUpperCase() : "TASK";
           let col = "todo";
@@ -304,6 +304,30 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Check if redirected from Django Admin Login with authentication parameters
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authParam = urlParams.get("auth");
+      const nameParam = urlParams.get("name");
+      const viewParam = urlParams.get("view");
+
+      if (authParam === "1" || authParam === "true") {
+        const userName = nameParam || "Admin";
+        setIsAuthenticated(true);
+        localStorage.setItem("admin_authenticated", "true");
+        localStorage.setItem("admin_logged_in_name", userName);
+        setTaskAssignBy(userName);
+        setView("dashboard");
+        localStorage.setItem("app_view", "dashboard");
+
+        // Clean up URL parameters cleanly
+        const cleanPath = window.location.pathname + (viewParam ? `?view=${viewParam}` : "");
+        window.history.replaceState({}, document.title, cleanPath);
+      }
+    } catch (err) {
+      console.error("Error reading auth params from URL:", err);
+    }
+
     refreshData();
 
     const handleBeforeInstall = (e) => {
@@ -370,7 +394,7 @@ export default function App() {
   const handleLoginSubmit = (e) => {
     e.preventDefault();
     setLoginError("");
-    
+
     axios.post("/api/admin-login/", { email: username, password })
       .then(res => {
         if (res.data.success) {
@@ -397,8 +421,10 @@ export default function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem("admin_authenticated");
+    localStorage.removeItem("admin_logged_in_name");
     setView("portal");
     localStorage.setItem("app_view", "portal");
+    axios.get("/admin/logout/").catch(() => { });
   };
 
   // Add Tags on Enter
@@ -564,7 +590,7 @@ export default function App() {
 
   const handleEditProjectClick = (project) => {
     const details = parseProjectRemarks(project.remarks);
-    
+
     setProjName(project.name);
     setProjClient(details.client);
     setProjCode(details.code);
@@ -572,12 +598,12 @@ export default function App() {
     setProjStartDate(details.startDate === "—" ? "" : details.startDate);
     setProjEndDate(details.endDate === "—" ? "" : details.endDate);
     setProjPriority(details.priority);
-    
+
     let apiStatus = "Planning";
     if (project.mode === "PROD") apiStatus = "Completed";
     if (project.mode === "MAINT") apiStatus = "Maintenance";
     setProjStatus(apiStatus);
-    
+
     let rawBudget = details.budget;
     if (rawBudget.includes(" ")) {
       const parts = rawBudget.split(" ");
@@ -585,7 +611,7 @@ export default function App() {
     } else {
       setProjBudget(rawBudget);
     }
-    
+
     setProjEstHours(details.estimatedHours === "—" ? "" : details.estimatedHours);
     setProjDepartment(details.department);
     setProjTags(details.tags);
@@ -610,16 +636,16 @@ export default function App() {
 
   const handleAddMemberToProjectSubmit = () => {
     if (!newMemberName) return;
-    
+
     const details = parseProjectRemarks(selectedProject.remarks);
-    
+
     if (details.members.some(m => m.name === newMemberName)) {
       alert("Member is already assigned to this project.");
       return;
     }
 
     const updatedMembersList = [...details.members, { name: newMemberName, role: newMemberRole }];
-    
+
     const richRemarks = `
 Client: ${details.client}
 Project Code: ${details.code}
@@ -651,7 +677,7 @@ Members: ${updatedMembersList.map(m => `${m.name} (${m.role})`).join(", ")}
 
   const handleUpdateProjectStage = (stageName) => {
     const details = parseProjectRemarks(selectedProject.remarks);
-    
+
     const richRemarks = `
 Client: ${details.client}
 Project Code: ${details.code}
@@ -737,7 +763,7 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
     const user = localStorage.getItem("admin_logged_in_name") || "Admin";
     const newItem = { text: taskDetailsChecklistInput.trim(), checked: false };
     const updatedChecklist = [...(selectedTask.checklist || []), newItem];
-    
+
     const newLog = {
       action: `Added checklist item "${newItem.text}"`,
       timestamp: new Date().toISOString(),
@@ -761,7 +787,7 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
     const hoursVal = parseFloat(loggedActualHours);
     if (isNaN(hoursVal) || hoursVal <= 0 || !selectedTask) return;
     const user = localStorage.getItem("admin_logged_in_name") || "Admin";
-    
+
     const updatedActualHours = (parseFloat(selectedTask.actual_hours) || 0) + hoursVal;
     const newLog = {
       action: `Logged ${hoursVal} hrs (Total Actual: ${updatedActualHours} hrs)`,
@@ -791,7 +817,7 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
       timestamp: new Date().toISOString()
     };
     const updatedComments = [...(selectedTask.comments || []), newComment];
-    
+
     const newLog = {
       action: "Comment added",
       timestamp: new Date().toISOString(),
@@ -823,7 +849,7 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
       uploadedBy: user
     };
     const updatedAttachments = [...(selectedTask.attachments || []), newAttachment];
-    
+
     const newLog = {
       action: `Attachment uploaded: ${file.name}`,
       timestamp: new Date().toISOString(),
@@ -905,7 +931,7 @@ Members: ${details.members.map(m => `${m.name} (${m.role})`).join(", ")}
     }
 
     const lines = remarks.split("\n");
-    const descriptionLines = lines.filter(line => 
+    const descriptionLines = lines.filter(line =>
       !line.startsWith("Client:") &&
       !line.startsWith("Project Code:") &&
       !line.startsWith("Project Manager:") &&
@@ -980,7 +1006,7 @@ Project Image Data: ${projImageBase64 || ""}
       is_visible_in_list: projIsVisibleInList
     };
 
-    const request = isEditingProject 
+    const request = isEditingProject
       ? axios.put(`/api/home/${projectEditingId}/`, payload)
       : axios.post("/api/home/", payload);
 
@@ -1058,7 +1084,7 @@ Project Image Data: ${projImageBase64 || ""}
   });
 
   const modeColor = {
-    DEV:  { bg: "#dbeafe", text: "#1e40af" },
+    DEV: { bg: "#dbeafe", text: "#1e40af" },
     TEST: { bg: "#fef3c7", text: "#92400e" },
     PROD: { bg: "#d1fae5", text: "#065f46" },
   };
@@ -1069,7 +1095,7 @@ Project Image Data: ${projImageBase64 || ""}
     const matchesName = p.name?.toLowerCase().includes(q);
     const matchesMode = p.mode?.toLowerCase().includes(q);
     const matchesUrl = p.url?.toLowerCase().includes(q);
-    const matchesLinks = Array.isArray(p.links) && p.links.some(l => 
+    const matchesLinks = Array.isArray(p.links) && p.links.some(l =>
       l.title?.toLowerCase().includes(q) || l.url?.toLowerCase().includes(q)
     );
     return matchesName || matchesMode || matchesUrl || matchesLinks;
@@ -1132,16 +1158,29 @@ Project Image Data: ${projImageBase64 || ""}
                   </button>
                 )}
 
-                <button onClick={handleDashboardClick}
-                  style={{
-                    background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
-                    padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
-                    boxShadow: "0 1px 3px rgba(15,23,42,0.12)"
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
-                  PM Dashboard
-                </button>
+                {isAuthenticated ? (
+                  <button onClick={() => { setView("dashboard"); localStorage.setItem("app_view", "dashboard"); }}
+                    style={{
+                      background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
+                      padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                      boxShadow: "0 1px 3px rgba(15,23,42,0.12)"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
+                    onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
+                    PM Dashboard
+                  </button>
+                ) : (
+                  <a href="/admin/login/"
+                    style={{
+                      background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
+                      padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                      boxShadow: "0 1px 3px rgba(15,23,42,0.12)", textDecoration: "none", display: "inline-flex", alignItems: "center"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
+                    onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
+                    Login
+                  </a>
+                )}
               </div>
             </div>
           </header>
@@ -1325,7 +1364,7 @@ Project Image Data: ${projImageBase64 || ""}
       {/* ── View B: NEW DEVELOPER TOP-NAVBAR VIEW ─────────────────────────── */}
       {view === "dashboard" && (
         <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", color: "#1e293b" }}>
-          
+
           {/* Top slim navigation bar in #00A2E8 */}
           <header style={{
             height: 56, background: "#00A2E8", display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -1361,8 +1400,8 @@ Project Image Data: ${projImageBase64 || ""}
                       background: isActive ? "#ffffff" : "transparent",
                       color: isActive ? "#00A2E8" : "#ffffff"
                     }}
-                    onMouseEnter={e => { if(!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
-                    onMouseLeave={e => { if(!isActive) e.currentTarget.style.background = "transparent"; }}>
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
                     {item.icon}
                     {item.label}
                   </button>
@@ -1412,7 +1451,7 @@ Project Image Data: ${projImageBase64 || ""}
 
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <main style={{ flex: 1, padding: "32px 32px 64px", overflowY: "auto" }}>
-              
+
               {/* Tab 1: Dashboard */}
               {activeTab === "dashboard" && (
                 <div>
@@ -1505,7 +1544,7 @@ Project Image Data: ${projImageBase64 || ""}
                             const progress = projectTasks.length ? Math.round((completed / projectTasks.length) * 100) : 0;
                             const colors = ["#00a2e8", "#10b981", "#f97316", "#8b5cf6", "#ef4444"];
                             const color = colors[idx % colors.length];
-                            
+
                             return (
                               <div key={p.id} style={{ marginBottom: 16 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
@@ -1594,13 +1633,13 @@ Project Image Data: ${projImageBase64 || ""}
                                 <span style={{ fontSize: 11, fontWeight: 800, color: "#334155" }}>{col.label}</span>
                                 <span style={{ fontSize: 10, background: "#e2e8f0", padding: "1px 6px", borderRadius: 10, fontWeight: 700, color: "#475569" }}>{finalTasks.length}</span>
                               </div>
-                              
+
                               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                                 {finalTasks.map(task => (
                                   <div key={task.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, padding: 10, boxShadow: "0 2px 4px rgba(0,0,0,0.02)", position: "relative" }}>
                                     <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>{task.project}</div>
                                     <div onClick={() => handleOpenTaskDetails(task)} style={{ fontSize: 11, fontWeight: 700, color: "#00a2e8", cursor: "pointer", textDecoration: "underline", marginBottom: 8, lineHeight: 1.4, wordBreak: "break-word" }}>{task.title}</div>
-                                    
+
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
                                       <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 700 }}>{task.code}</span>
                                       <UserAvatar name={task.developer} size={22} />
@@ -1704,14 +1743,14 @@ Project Image Data: ${projImageBase64 || ""}
               {/* Tab 2: Projects */}
               {activeTab === "projects" && (() => {
                 const filteredProjectsList = projects.filter(project => {
-                  const matchQuery = !search.trim() || 
+                  const matchQuery = !search.trim() ||
                     project.name.toLowerCase().includes(search.toLowerCase()) ||
                     project.client.toLowerCase().includes(search.toLowerCase()) ||
                     (project.project_code && project.project_code.toLowerCase().includes(search.toLowerCase()));
 
                   const matchManager = !filterProjManager || project.project_manager === filterProjManager;
                   const matchMode = !filterProjMode || project.mode === filterProjMode;
-                  
+
                   const remarksVal = project.remarks || "";
                   const priorityMatch = remarksVal.match(/priority:\s*(Low|Medium|High|Critical)/i);
                   const projPriority = priorityMatch ? priorityMatch[1] : "Medium";
@@ -1753,7 +1792,7 @@ Project Image Data: ${projImageBase64 || ""}
                     {/* Header bar */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <button onClick={() => setActiveTab("dashboard")} 
+                        <button onClick={() => setActiveTab("dashboard")}
                           style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#0f172a", padding: "0 4px" }}
                           title="Back">
                           ←
@@ -1765,7 +1804,7 @@ Project Image Data: ${projImageBase64 || ""}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div style={{ display: "flex", gap: 12 }}>
                         <button style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 6, padding: "8px 16px", color: "#475569", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           Export ▾
@@ -1932,7 +1971,7 @@ Project Image Data: ${projImageBase64 || ""}
                               style={{ border: "1px solid #cbd5e1", background: "#fff", color: projectsPage === 1 ? "#cbd5e1" : "#475569", borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: projectsPage === 1 ? "not-allowed" : "pointer", fontSize: 12 }}>
                               ‹
                             </button>
-                            
+
                             {Array.from({ length: totalPages }).map((_, idx) => {
                               const pNum = idx + 1;
                               const active = projectsPage === pNum;
@@ -1965,28 +2004,28 @@ Project Image Data: ${projImageBase64 || ""}
               {activeTab === "tasks" && (() => {
                 // Filter logic
                 const filteredTasksList = kanbanTasks.filter(task => {
-                  const matchQuery = !search.trim() || 
+                  const matchQuery = !search.trim() ||
                     task.title.toLowerCase().includes(search.toLowerCase()) ||
                     task.developer.toLowerCase().includes(search.toLowerCase()) ||
                     task.project.toLowerCase().includes(search.toLowerCase()) ||
                     task.code.toLowerCase().includes(search.toLowerCase());
-                    
+
                   const matchProject = !filterProject || String(task.projectId) === String(filterProject);
                   const matchAssignee = !filterAssignee || task.developer === filterAssignee;
-                  
+
                   const taskApiStatus = task.rawTask?.status || task.status || "To Do";
                   const matchStatus = !filterStatus || taskApiStatus === filterStatus;
-                  
+
                   const taskApiPriority = task.rawTask?.priority || "Low";
                   const matchPriority = !filterPriority || taskApiPriority === filterPriority;
-                  
+
                   const taskDate = task.date ? new Date(task.date) : null;
                   const matchStartDate = !filterStartDate || (taskDate && taskDate >= new Date(filterStartDate));
                   const matchEndDate = !filterEndDate || (taskDate && taskDate <= new Date(filterEndDate + "T23:59:59"));
-                  
+
                   const loggedUser = localStorage.getItem("admin_logged_in_name") || "Admin";
                   const matchSubTab = tasksSubTab !== "My Tasks" || task.developer === loggedUser;
-                  
+
                   return matchQuery && matchProject && matchAssignee && matchStatus && matchPriority && matchStartDate && matchEndDate && matchSubTab;
                 });
 
@@ -2025,7 +2064,7 @@ Project Image Data: ${projImageBase64 || ""}
                     {/* Tasks Header Bar */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <button onClick={() => setActiveTab("dashboard")} 
+                        <button onClick={() => setActiveTab("dashboard")}
                           style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#0f172a", padding: "0 4px" }}
                           title="Back">
                           ←
@@ -2037,7 +2076,7 @@ Project Image Data: ${projImageBase64 || ""}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div style={{ display: "flex", gap: 12 }}>
                         <button style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 6, padding: "8px 16px", color: "#475569", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           Export ▾
@@ -2246,7 +2285,7 @@ Project Image Data: ${projImageBase64 || ""}
                                   style={{ border: "1px solid #cbd5e1", background: "#fff", color: tasksPage === 1 ? "#cbd5e1" : "#475569", borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: tasksPage === 1 ? "not-allowed" : "pointer", fontSize: 12 }}>
                                   ‹
                                 </button>
-                                
+
                                 {Array.from({ length: totalPages }).map((_, idx) => {
                                   const pNum = idx + 1;
                                   const active = tasksPage === pNum;
@@ -2280,11 +2319,11 @@ Project Image Data: ${projImageBase64 || ""}
               {/* Tab 4: Create Project (Premium Light-Mode UI matching the new image) */}
               {activeTab === "add_project" && (
                 <div style={{ background: "#ffffff", borderRadius: 12, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.03)", border: "1px solid #e2e8f0" }}>
-                  
+
                   {/* Light Header Title */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <button onClick={() => setActiveTab("projects")} 
+                      <button onClick={() => setActiveTab("projects")}
                         style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#1e293b", padding: "0 4px" }}
                         title="Back">
                         ←
@@ -2299,7 +2338,7 @@ Project Image Data: ${projImageBase64 || ""}
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Top Action Buttons */}
                     <div style={{ display: "flex", gap: 12 }}>
                       <button onClick={() => { resetProjectForm(); setActiveTab("projects"); }}
@@ -2327,11 +2366,11 @@ Project Image Data: ${projImageBase64 || ""}
 
                   {/* Main Grid: 2 columns */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 32, marginTop: 24 }}>
-                    
+
                     {/* Left Column: Project Information */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                       <h3 style={sectionTitleStyle}>Project Information</h3>
-                      
+
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Project Name *</label>
                         <input type="text" value={projName} onChange={e => setProjName(e.target.value)} style={lightInputStyle} placeholder="Enter project name" />
@@ -2502,7 +2541,7 @@ Project Image Data: ${projImageBase64 || ""}
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Tags</label>
                         <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={handleTagKeyPress} style={lightInputStyle} placeholder="Enter tags and press Enter" />
-                        
+
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                           {projTags.map((tag, idx) => (
                             <span key={idx} style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
@@ -2619,9 +2658,9 @@ Project Image Data: ${projImageBase64 || ""}
                   {/* Bottom: Project Members Section */}
                   <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 32, paddingTop: 28 }}>
                     <h3 style={sectionTitleStyle}>Project Members</h3>
-                    
+
                     <div style={{ display: "grid", gridTemplateColumns: "1.4fr 2fr", gap: 32, marginTop: 16 }}>
-                      
+
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Add Team Members</label>
                         <div style={{ display: "flex", gap: 8 }}>
@@ -2644,7 +2683,7 @@ Project Image Data: ${projImageBase64 || ""}
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{member.name}</div>
                                 <div style={{ fontSize: 10, color: "#64748b" }}>{member.role}</div>
                               </div>
-                              <button type="button" onClick={() => removeTeamMember(idx)} 
+                              <button type="button" onClick={() => removeTeamMember(idx)}
                                 style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, padding: "0 4px", fontWeight: "bold" }}>
                                 ✕
                               </button>
@@ -2666,11 +2705,11 @@ Project Image Data: ${projImageBase64 || ""}
               {/* Tab 5: Create Task (Premium Light-Mode UI matching the task image) */}
               {activeTab === "add_task" && (
                 <div style={{ background: "#ffffff", borderRadius: 12, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.03)", border: "1px solid #e2e8f0" }}>
-                  
+
                   {/* Light Header Title */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <button onClick={() => setActiveTab("tasks")} 
+                      <button onClick={() => setActiveTab("tasks")}
                         style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#1e293b", padding: "0 4px" }}
                         title="Back">
                         ←
@@ -2683,7 +2722,7 @@ Project Image Data: ${projImageBase64 || ""}
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Top Action Buttons */}
                     <div style={{ display: "flex", gap: 12 }}>
                       <button onClick={() => { resetTaskForm(); setActiveTab("tasks"); }}
@@ -2711,11 +2750,11 @@ Project Image Data: ${projImageBase64 || ""}
 
                   {/* Main Grid: 2 columns */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 32, marginTop: 24 }}>
-                    
+
                     {/* Left Column: Task Details */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                       <h3 style={sectionTitleStyle}>Task Details</h3>
-                      
+
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Task Name *</label>
                         <input type="text" value={taskName} onChange={e => setTaskName(e.target.value)} style={lightInputStyle} placeholder="Enter task name" />
@@ -2839,7 +2878,7 @@ Project Image Data: ${projImageBase64 || ""}
 
                     {/* Right Column */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                      
+
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Assigned To *</label>
                         <select value={taskAssignedTo} onChange={e => setTaskAssignedTo(e.target.value)} style={lightSelectStyle}>
@@ -2902,7 +2941,7 @@ Project Image Data: ${projImageBase64 || ""}
                       <div style={fieldGroupStyle}>
                         <label style={fieldLabelStyle}>Tags (Optional)</label>
                         <input type="text" value={taskTagInput} onChange={e => setTaskTagInput(e.target.value)} onKeyDown={handleTaskTagKeyPress} style={lightInputStyle} placeholder="Enter tags and press Enter" />
-                        
+
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                           {taskTags.map((tag, idx) => (
                             <span key={idx} style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
@@ -2922,7 +2961,7 @@ Project Image Data: ${projImageBase64 || ""}
               {/* Tab 6: Project Details View (Premium Light-Mode UI matching the details image exactly) */}
               {activeTab === "project_details" && selectedProject && (() => {
                 const details = parseProjectRemarks(selectedProject.remarks);
-                
+
                 // Dynamic calculations for overall task progress
                 const projectTasks = kanbanTasks.filter(t => String(t.projectId) === String(selectedProject.id));
                 const completedCount = projectTasks.filter(t => t.column === "completed").length;
@@ -2944,11 +2983,11 @@ Project Image Data: ${projImageBase64 || ""}
 
                 return (
                   <div style={{ background: "#f8fafc", color: "#1e293b", minHeight: "100vh" }}>
-                    
+
                     {/* Header bar */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <button onClick={() => { setActiveTab("projects"); setSelectedProject(null); }} 
+                        <button onClick={() => { setActiveTab("projects"); setSelectedProject(null); }}
                           style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#0f172a", padding: "0 4px" }}
                           title="Back">
                           ←
@@ -2960,7 +2999,7 @@ Project Image Data: ${projImageBase64 || ""}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div style={{ display: "flex", gap: 12 }}>
                         <button onClick={() => handleEditProjectClick(selectedProject)}
                           style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 6, padding: "8px 16px", color: "#475569", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -2978,7 +3017,7 @@ Project Image Data: ${projImageBase64 || ""}
                         const activeIdx = PROJECT_STAGES.indexOf(details.currentStage);
                         const isActive = stage === details.currentStage;
                         const isCompleted = idx < activeIdx;
-                        
+
                         let clipPathVal = "polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%, 10px 50%)";
                         if (idx === 0) {
                           clipPathVal = "polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%)";
@@ -3017,7 +3056,7 @@ Project Image Data: ${projImageBase64 || ""}
                         <div style={{ width: 48, height: 48, borderRadius: 8, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
                           📂
                         </div>
-                        
+
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                             <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>{selectedProject.name}</h1>
@@ -3033,7 +3072,7 @@ Project Image Data: ${projImageBase64 || ""}
                             const pLinks = (Array.isArray(selectedProject.links) && selectedProject.links.length > 0)
                               ? selectedProject.links
                               : (selectedProject.url ? [{ title: "Live / Production", url: selectedProject.url, env: "prod" }] : []);
-                            
+
                             return (
                               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px dashed #e2e8f0" }}>
                                 <span style={{ fontSize: 11, fontWeight: 700, color: "#8c8277", textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -3163,11 +3202,11 @@ Project Image Data: ${projImageBase64 || ""}
                     {detailsActiveTab === "Overview" && (
                       <div>
                         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1.2fr", gap: 24 }}>
-                          
+
                           {/* Overview Box Column 1 */}
                           <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
                             <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: 0 }}>Project Overview</h3>
-                            
+
                             <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px 6px", fontSize: 12 }}>
                               <span style={{ color: "#64748b", fontWeight: 600 }}>Project Type</span>
                               <span style={{ color: "#0f172a", fontWeight: 700 }}>Fixed bid</span>
@@ -3205,7 +3244,7 @@ Project Image Data: ${projImageBase64 || ""}
                           {/* Gauge Chart Column 2 */}
                           <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                             <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", width: "100%", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Progress</h3>
-                            
+
                             <div style={{ position: "relative", width: 120, height: 120, marginBottom: 20 }}>
                               <svg width="120" height="120" viewBox="0 0 36 36" style={{ transform: "rotate(-90deg)" }}>
                                 <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#f1f5f9" strokeWidth="3" />
@@ -3237,7 +3276,7 @@ Project Image Data: ${projImageBase64 || ""}
                           {/* Milestones Column 3 */}
                           <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column" }}>
                             <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Recent Milestones</h3>
-                            
+
                             <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
                               <div style={{ display: "flex", gap: 12, position: "relative" }}>
                                 <span style={{ position: "absolute", left: 5, top: 12, bottom: -20, width: 1.5, background: "#10b981" }} />
@@ -3283,7 +3322,7 @@ Project Image Data: ${projImageBase64 || ""}
                         {/* Bottom: Project Members Section */}
                         <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, marginTop: 24 }}>
                           <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Project Members</h3>
-                          
+
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
                             {details.members.length > 0 ? (
                               details.members.map((member, idx) => (
@@ -3298,7 +3337,7 @@ Project Image Data: ${projImageBase64 || ""}
                             ) : (
                               <div style={{ fontSize: 12, color: "#94a3b8" }}>No specific members assigned yet.</div>
                             )}
-                            
+
                             <div onClick={() => setShowAddMemberModal(true)}
                               style={{ border: "1.5px dashed #cbd5e1", borderRadius: 8, padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#00a2e8", cursor: "pointer", minWidth: 140 }}>
                               <span style={{ fontSize: 16, fontWeight: "bold" }}>+</span>
@@ -3483,7 +3522,7 @@ Project Image Data: ${projImageBase64 || ""}
                     {detailsActiveTab === "Billing" && (
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24 }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Billing Summary</h3>
-                        
+
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24, marginTop: 16 }}>
                           <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 16 }}>
                             <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Total Budget</div>
@@ -3514,7 +3553,7 @@ Project Image Data: ${projImageBase64 || ""}
               {activeTab === "task_details" && selectedTask && (() => {
                 const projectSlug = selectedTask.project_name ? selectedTask.project_name.substring(0, 3).toUpperCase() : "TASK";
                 const taskCode = selectedTask.code || `#${projectSlug}-${selectedTask.id}`;
-                
+
                 const checklistItems = selectedTask.checklist || [];
                 const completedCount = checklistItems.filter(item => item.checked).length;
                 const totalCount = checklistItems.length;
@@ -3536,11 +3575,11 @@ Project Image Data: ${projImageBase64 || ""}
 
                 return (
                   <div style={{ background: "#f8fafc", color: "#1e293b", minHeight: "100vh" }}>
-                    
+
                     {/* Header bar */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <button onClick={() => { setActiveTab("tasks"); setSelectedTask(null); }} 
+                        <button onClick={() => { setActiveTab("tasks"); setSelectedTask(null); }}
                           style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "#0f172a", padding: "0 4px" }}
                           title="Back">
                           ←
@@ -3552,7 +3591,7 @@ Project Image Data: ${projImageBase64 || ""}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div style={{ display: "flex", gap: 12 }}>
                         <button onClick={() => {
                           setTaskName(selectedTask.name);
@@ -3568,7 +3607,7 @@ Project Image Data: ${projImageBase64 || ""}
                           setTaskStatus(selectedTask.status || "To Do");
                           setTaskTags(selectedTask.tags || []);
                           setTaskAttachments(selectedTask.attachments || []);
-                          
+
                           setTaskEditingId(selectedTask.id);
                           setActiveTab("add_task");
                         }}
@@ -3584,7 +3623,7 @@ Project Image Data: ${projImageBase64 || ""}
 
                     {/* Main Layout Grid */}
                     <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1.2fr 1fr", gap: 24, marginBottom: 24 }}>
-                      
+
                       {/* Left Column: Task Main info */}
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
                         <div>
@@ -3631,7 +3670,7 @@ Project Image Data: ${projImageBase64 || ""}
                                 {item.text}
                               </label>
                             ))}
-                            
+
                             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
                               <input type="text" placeholder="Add checklist item" value={taskDetailsChecklistInput} onChange={e => setTaskDetailsChecklistInput(e.target.value)}
                                 style={{ flex: 1, height: 32, border: "1px solid #cbd5e1", borderRadius: 6, padding: "0 10px", fontSize: 12 }} />
@@ -3647,9 +3686,9 @@ Project Image Data: ${projImageBase64 || ""}
                       {/* Middle Column: Task Info Sidebar */}
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: 0 }}>Task Information</h3>
-                        
+
                         <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 12 }}>
-                          
+
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ color: "#64748b", fontWeight: 600 }}>Assigned To</span>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3712,7 +3751,7 @@ Project Image Data: ${projImageBase64 || ""}
                       {/* Right Column: Activity Log */}
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column" }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Activity Log</h3>
-                        
+
                         <div style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", maxHeight: 300 }}>
                           {(selectedTask.activity_log && selectedTask.activity_log.length > 0) ? (
                             selectedTask.activity_log.map((log, idx) => (
@@ -3747,11 +3786,11 @@ Project Image Data: ${projImageBase64 || ""}
 
                     {/* Bottom: Attachments and Comments section */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-                      
+
                       {/* Attachments Card */}
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24 }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Attachments ({(selectedTask.attachments || []).length})</h3>
-                        
+
                         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
                           {(selectedTask.attachments || []).map((file, idx) => (
                             <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
@@ -3778,7 +3817,7 @@ Project Image Data: ${projImageBase64 || ""}
                       {/* Comments Card */}
                       <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 24, display: "flex", flexDirection: "column" }}>
                         <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: 8, margin: "0 0 16px 0" }}>Comments ({(selectedTask.comments || []).length})</h3>
-                        
+
                         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12, flex: 1, maxHeight: 200, overflowY: "auto", marginBottom: 16 }}>
                           {(selectedTask.comments || []).length > 0 ? (
                             selectedTask.comments.map((comm, idx) => (
@@ -3887,7 +3926,7 @@ Project Image Data: ${projImageBase64 || ""}
                   }}>
                   Cancel
                 </button>
-                
+
                 <button type="submit"
                   style={{
                     flex: 1, padding: "11px", borderRadius: 6, border: "none",
@@ -3916,7 +3955,7 @@ Project Image Data: ${projImageBase64 || ""}
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>Add Project Member</h3>
-              <button onClick={() => { setShowAddMemberModal(false); setNewMemberName(""); }} 
+              <button onClick={() => { setShowAddMemberModal(false); setNewMemberName(""); }}
                 style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 18, fontWeight: "bold" }}>
                 ✕
               </button>

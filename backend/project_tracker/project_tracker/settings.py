@@ -53,7 +53,18 @@ MIDDLEWARE = [
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['https://track.tresvance.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://track.tresvance.com',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'home.auth_backend.DualAdminAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 ROOT_URLCONF = 'project_tracker.urls'
 
