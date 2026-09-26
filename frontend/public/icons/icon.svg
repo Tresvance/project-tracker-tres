@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Rectangle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer subtle border -->
+  <rect x="2" y="2" width="508" height="508" rx="110" fill="none" stroke="#334155" stroke-width="4" opacity="0.6" />
+
+  <!-- Inner Brand Chevrons (Tresvance V-marks) -->
+  <g filter="url(#shadow)" transform="translate(56, 126)">
+    <!-- First Chevron (White) -->
+    <path d="M40 30 L112 210 L184 30"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="46"
+          stroke-linecap="round"
+          stroke-linejoin="round" />
+
+    <!-- Second Chevron (Vibrant Brand Blue) -->
+    <path d="M216 210 L288 30 L360 210"
+          fill="none"
+          stroke="url(#accentGrad)"
+          stroke-width="46"
+          stroke-linecap="round"
+          stroke-linejoin="round" />
+  </g>
+
+  <!-- Accent Status Dot -->
+  <circle cx="410" cy="102" r="14" fill="#38bdf8" />
+</svg>

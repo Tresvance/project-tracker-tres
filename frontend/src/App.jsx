@@ -254,6 +254,13 @@ export default function App() {
   const [projImageBase64, setProjImageBase64] = useState("");
   const [taskAttachments, setTaskAttachments] = useState([]);
 
+  // Progressive Web App (PWA) states
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(() => 
+    typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true)
+  );
+  const [isOnline, setIsOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
+
   const refreshData = () => {
     setLoading(true);
     Promise.all([
@@ -298,7 +305,41 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setIsStandalone(true);
+    };
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
+
+  const handleInstallPwa = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+  };
 
   const moveTask = (taskId, newCol) => {
     let apiStatus = "To Do";
@@ -1036,7 +1077,30 @@ Project Image Data: ${projImageBase64 || ""}
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
-      
+
+      {/* Global Offline Mode Status Banner */}
+      {!isOnline && (
+        <div style={{
+          background: "#1e293b",
+          color: "#f8fafc",
+          fontSize: 12,
+          padding: "7px 16px",
+          textAlign: "center",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          borderBottom: "1px solid #334155",
+          position: "sticky",
+          top: 0,
+          zIndex: 2000
+        }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
+          Offline Mode — You are working offline. Cached project data is available.
+        </div>
+      )}
+
       {/* ── View A: PORTAL VIEW (Cool Slate & Zinc Nordic Minimalist Theme) ────────────────── */}
       {view === "portal" && (
         <div style={{ minHeight: "100vh", background: "#f1f5f9", color: "#0f172a" }}>
@@ -1047,17 +1111,38 @@ Project Image Data: ${projImageBase64 || ""}
                 <div style={{ width: 1, height: 20, background: "#cbd5e1" }} />
                 <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: "#64748b", fontWeight: 600 }}>Softwares</span>
               </div>
-              
-              <button onClick={handleDashboardClick}
-                style={{
-                  background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
-                  padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
-                  boxShadow: "0 1px 3px rgba(15,23,42,0.12)"
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
-                onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
-                PM Dashboard
-              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {deferredPrompt && !isStandalone && (
+                  <button onClick={handleInstallPwa}
+                    style={{
+                      background: "#f1f5f9", color: "#0f172a", border: "1px solid #cbd5e1",
+                      padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                      display: "flex", alignItems: "center", gap: 6
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"}
+                    onMouseLeave={e => e.currentTarget.style.background = "#f1f5f9"}
+                    title="Install Progressive Web App">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Install App
+                  </button>
+                )}
+
+                <button onClick={handleDashboardClick}
+                  style={{
+                    background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
+                    padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                    boxShadow: "0 1px 3px rgba(15,23,42,0.12)"
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
+                  PM Dashboard
+                </button>
+              </div>
             </div>
           </header>
 
@@ -1285,8 +1370,27 @@ Project Image Data: ${projImageBase64 || ""}
               })}
             </nav>
 
-            {/* Right: profile, logout */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {/* Right: profile, install button, logout */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {deferredPrompt && !isStandalone && (
+                <button onClick={handleInstallPwa}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.16)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.3)",
+                    padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                    display: "flex", alignItems: "center", gap: 6
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255, 255, 255, 0.28)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255, 255, 255, 0.16)"}
+                  title="Install Progressive Web App">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Install App
+                </button>
+              )}
+
               <button onClick={handleLogout}
                 style={{
                   border: "none", background: "transparent", color: "#ffe4e6",
@@ -1294,7 +1398,7 @@ Project Image Data: ${projImageBase64 || ""}
                 }}
                 onMouseEnter={e => e.currentTarget.style.color = "#f43f5e"}
                 onMouseLeave={e => e.currentTarget.style.color = "#ffe4e6"}>
-                🚪 Logout
+                Logout
               </button>
 
               <div style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid rgba(255, 255, 255, 0.2)", paddingLeft: 12 }}>
