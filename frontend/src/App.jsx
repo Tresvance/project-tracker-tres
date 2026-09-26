@@ -41,12 +41,14 @@ function SearchIcon({ size = 18, color }) {
 }
 
 // -- Brand Logo --
-function TresvanceLogo({ size = 22 }) {
+function TresvanceLogo({ size = 22, light = false }) {
+  const textColor = light ? "#2b2520" : "#fff";
+  const vColor = light ? "#332b25" : "#29ABE2";
   return (
     <svg width={size * 4.5} height={size} viewBox="0 0 180 40" fill="none" style={{ cursor: "pointer" }}>
-      <text x="0" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="300" fill="#fff">tres</text>
-      <text x="62" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="700" fill="#29ABE2">v</text>
-      <text x="80" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="300" fill="#fff">ance</text>
+      <text x="0" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="300" fill={textColor}>tres</text>
+      <text x="62" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="700" fill={vColor}>v</text>
+      <text x="80" y="30" fontFamily="'Helvetica Neue',Arial,sans-serif" fontSize="30" fontWeight="300" fill={textColor}>ance</text>
     </svg>
   );
 }
@@ -90,50 +92,50 @@ const getEnvBadgeInfo = (env = "", title = "") => {
 
   if (e === "prod" || t.includes("prod") || t.includes("live")) {
     return {
-      bg: "#ecfdf5",
-      border: "#a7f3d0",
-      text: "#065f46",
-      dot: "#10b981",
-      icon: "🟢",
+      bg: "#edf5ee",
+      border: "#c8e2cc",
+      text: "#1e4d2b",
+      dot: "#2e7d32",
+      icon: "",
       label: "Live / Production"
     };
   }
   if (e === "test" || t.includes("test") || t.includes("qa")) {
     return {
-      bg: "#fff7ed",
-      border: "#fed7aa",
-      text: "#9a3412",
-      dot: "#f97316",
-      icon: "🧪",
+      bg: "#fdf5ea",
+      border: "#f9e2bf",
+      text: "#854d14",
+      dot: "#d97706",
+      icon: "",
       label: "Test Server"
     };
   }
   if (e === "dev" || t.includes("dev") || t.includes("local")) {
     return {
-      bg: "#eff6ff",
-      border: "#bfdbfe",
-      text: "#1e40af",
-      dot: "#3b82f6",
-      icon: "💻",
+      bg: "#eef5fa",
+      border: "#cbe0ef",
+      text: "#234d70",
+      dot: "#2b6cb0",
+      icon: "",
       label: "Development"
     };
   }
   if (e === "staging" || t.includes("staging")) {
     return {
-      bg: "#faf5ff",
-      border: "#e9d5ff",
-      text: "#6b21a8",
-      dot: "#a855f7",
-      icon: "🟣",
+      bg: "#f8f2fc",
+      border: "#e7d5f5",
+      text: "#5b3777",
+      dot: "#7c3aed",
+      icon: "",
       label: "Staging"
     };
   }
   return {
-    bg: "#f8fafc",
-    border: "#e2e8f0",
-    text: "#334155",
-    dot: "#64748b",
-    icon: "🔗",
+    bg: "#f2eee6",
+    border: "#ded7cb",
+    text: "#5c544c",
+    dot: "#8a8177",
+    icon: "",
     label: "Link"
   };
 };
@@ -1030,27 +1032,26 @@ Project Image Data: ${projImageBase64 || ""}
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
       
-      {/* ── View A: OLD PORTAL VIEW ────────────────────────────────────────── */}
+      {/* ── View A: PORTAL VIEW (Creamy Eye-Friendly Theme) ────────────────── */}
       {view === "portal" && (
-        <div style={{ minHeight: "100vh", background: "#f4f7f9" }}>
-          <header style={{ background: "#111", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
-            <div style={{ height: 3, background: "linear-gradient(90deg,#29ABE2,#1a7aad)" }} />
+        <div style={{ minHeight: "100vh", background: "#f7f4ee", color: "#2b2520" }}>
+          <header style={{ background: "#fffdfa", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid #e2dcce", boxShadow: "0 1px 3px rgba(43,37,32,0.03)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", height: 58 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <TresvanceLogo size={22} />
-                <div style={{ width: 1, height: 20, background: "#333" }} />
-                <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 3, color: "#555" }}>Softwares</span>
+                <TresvanceLogo size={22} light={true} />
+                <div style={{ width: 1, height: 20, background: "#e2dcce" }} />
+                <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: "#8c8277", fontWeight: 600 }}>Softwares</span>
               </div>
               
               <button onClick={handleDashboardClick}
                 style={{
-                  background: "linear-gradient(135deg, #00a2e8, #29ABE2)", color: "#fff", border: "none",
-                  padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "opacity .15s",
-                  boxShadow: "0 4px 10px rgba(41,171,226,0.2)"
+                  background: "#332b25", color: "#fffdfa", border: "1px solid #332b25",
+                  padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
+                  boxShadow: "0 1px 3px rgba(51,43,37,0.12)"
                 }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
-                onMouseLeave={e => e.currentTarget.style.opacity = 1}>
-                📊 PM Dashboard
+                onMouseEnter={e => e.currentTarget.style.background = "#221c17"}
+                onMouseLeave={e => e.currentTarget.style.background = "#332b25"}>
+                PM Dashboard
               </button>
             </div>
           </header>
@@ -1058,13 +1059,13 @@ Project Image Data: ${projImageBase64 || ""}
           <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontSize: 26, fontWeight: 700, color: "#111", margin: 0 }}>Projects</h1>
-                <p style={{ fontSize: 13, color: "#999", marginTop: 4 }}>All active projects at Tresvance Softwares</p>
+                <h1 style={{ fontSize: 26, fontWeight: 700, color: "#2b2520", margin: 0 }}>Projects</h1>
+                <p style={{ fontSize: 13, color: "#6e645a", marginTop: 4 }}>All active projects at Tresvance Softwares</p>
               </div>
               <input
                 type="text" placeholder="Search projects..."
                 value={search} onChange={(e) => setSearch(e.target.value)}
-                style={{ border: "1.5px solid #e2eaf0", borderRadius: 7, padding: "9px 14px", fontSize: 13, width: 220, background: "#fff", color: "#111" }}
+                style={{ border: "1px solid #ded7c9", borderRadius: 7, padding: "9px 14px", fontSize: 13, width: 220, background: "#fffdfa", color: "#2b2520", outline: "none", boxShadow: "0 1px 2px rgba(43,37,32,0.02)" }}
               />
             </div>
 
@@ -1073,10 +1074,10 @@ Project Image Data: ${projImageBase64 || ""}
             ) : filteredProjects.length === 0 ? (
               <div style={emptyBox}>No projects found</div>
             ) : (
-              <div style={{ background: "#fff", border: "1px solid #e2eaf0", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", background: "#111" }}>
+              <div style={{ background: "#fffdfa", border: "1px solid #e2dcce", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(43,37,32,0.04)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", background: "#f4f0e6", borderBottom: "1px solid #e2dcce" }}>
                   {["Project Name", "Environments & Links", "Version", "Remarks"].map((h) => (
-                    <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: "#888" }}>{h}</div>
+                    <div key={h} style={{ padding: "12px 18px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "#8c8277" }}>{h}</div>
                   ))}
                 </div>
 
@@ -1087,18 +1088,18 @@ Project Image Data: ${projImageBase64 || ""}
 
                   return (
                     <div key={project.id}
-                      style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", borderBottom: "1px solid #f0f4f7", background: i % 2 === 0 ? "#fff" : "#fafcfd", transition: "background .15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f0f7fc"}
-                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#fafcfd"}>
+                      style={{ display: "grid", gridTemplateColumns: "1.2fr 3.2fr 65px 1.6fr", borderBottom: "1px solid #f0ebe1", background: i % 2 === 0 ? "#fffdfa" : "#faf8f2", transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#f2ece0"}
+                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "#fffdfa" : "#faf8f2"}>
 
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#29ABE2", flexShrink: 0 }} />
-                        <span style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>{project.name}</span>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4a3e35", flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "#2b2520" }}>{project.name}</span>
                       </div>
 
                       <div style={{ padding: "12px 18px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 7, minWidth: 0 }}>
                         {rawLinks.length === 0 ? (
-                          <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>
+                          <span style={{ color: "#b5ac9e", fontSize: 13 }}>—</span>
                         ) : (
                           rawLinks.map((link, lIdx) => {
                             const b = getEnvBadgeInfo(link.env, link.title);
@@ -1110,14 +1111,14 @@ Project Image Data: ${projImageBase64 || ""}
                                 <span style={{
                                   display: "inline-flex",
                                   alignItems: "center",
-                                  gap: 4,
+                                  gap: 5,
                                   background: b.bg,
                                   border: `1px solid ${b.border}`,
                                   color: b.text,
                                   padding: "2px 7px",
                                   borderRadius: 4,
                                   fontSize: 10,
-                                  fontWeight: 800,
+                                  fontWeight: 700,
                                   letterSpacing: 0.3,
                                   flexShrink: 0,
                                   minWidth: 44,
@@ -1136,7 +1137,7 @@ Project Image Data: ${projImageBase64 || ""}
                                   title={link.url}
                                   style={{
                                     fontSize: 12,
-                                    color: "#00a2e8",
+                                    color: "#234d70",
                                     textDecoration: "none",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
@@ -1149,8 +1150,14 @@ Project Image Data: ${projImageBase64 || ""}
                                     minWidth: 0,
                                     flexShrink: 1
                                   }}
-                                  onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                                  onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.color = "#16344d";
+                                    e.currentTarget.style.textDecoration = "underline";
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.color = "#234d70";
+                                    e.currentTarget.style.textDecoration = "none";
+                                  }}>
                                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                     {link.url}
                                   </span>
@@ -1165,9 +1172,9 @@ Project Image Data: ${projImageBase64 || ""}
                                 {linkNote ? (
                                   <span style={{
                                     fontSize: 11,
-                                    color: "#475569",
-                                    background: "#f1f5f9",
-                                    border: "1px solid #e2e8f0",
+                                    color: "#5e554d",
+                                    background: "#f0ebe1",
+                                    border: "1px solid #e2dcce",
                                     padding: "1px 8px",
                                     borderRadius: 4,
                                     whiteSpace: "nowrap",
@@ -1179,7 +1186,6 @@ Project Image Data: ${projImageBase64 || ""}
                                     alignItems: "center",
                                     gap: 4
                                   }} title={linkNote}>
-                                    <span style={{ color: "#94a3b8", fontSize: 9 }}>💬</span>
                                     <span>{linkNote}</span>
                                   </span>
                                 ) : null}
@@ -1190,11 +1196,11 @@ Project Image Data: ${projImageBase64 || ""}
                       </div>
 
                       <div style={{ padding: "14px 10px", display: "flex", alignItems: "center" }}>
-                        <span style={{ fontSize: 12, color: "#888", background: "#f4f4f4", borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>v{project.version}</span>
+                        <span style={{ fontSize: 11, color: "#5e554d", background: "#f0ebe1", border: "1px solid #e2dcce", borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>v{project.version}</span>
                       </div>
 
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "flex-start" }}>
-                        <span style={{ fontSize: 13, color: "#666", lineHeight: 1.5, wordBreak: "break-word" }}>
+                        <span style={{ fontSize: 13, color: "#5e554d", lineHeight: 1.5, wordBreak: "break-word" }}>
                           {(() => {
                             const remText = project.remarks || "";
                             const cleanText = remText.replace(/\r?\n/g, " ");
@@ -1203,13 +1209,13 @@ Project Image Data: ${projImageBase64 || ""}
                                 <span>
                                   {cleanText.substring(0, 50)}...{" "}
                                   <button onClick={() => setRemarksModalText(project.remarks)}
-                                    style={{ background: "none", border: "none", color: "#00a2e8", padding: 0, fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
+                                    style={{ background: "none", border: "none", color: "#234d70", padding: 0, fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
                                     Read More
                                   </button>
                                 </span>
                               );
                             }
-                            return cleanText || <span style={{ color: "#ddd" }}>—</span>;
+                            return cleanText || <span style={{ color: "#b5ac9e" }}>—</span>;
                           })()}
                         </span>
                       </div>
@@ -1217,7 +1223,7 @@ Project Image Data: ${projImageBase64 || ""}
                   );
                 })}
 
-                <div style={{ padding: "10px 18px", background: "#fafcfd", borderTop: "1px solid #f0f4f7", fontSize: 12, color: "#bbb" }}>
+                <div style={{ padding: "10px 18px", background: "#f4f0e6", borderTop: "1px solid #e2dcce", fontSize: 12, color: "#8c8277" }}>
                   {filteredProjects.length} project{filteredProjects.length !== 1 ? "s" : ""}
                 </div>
               </div>
@@ -2360,11 +2366,11 @@ Project Image Data: ${projImageBase64 || ""}
                   </div>
 
                   {/* Environments & Links (View only - Managed in Django Admin) */}
-                  <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 32, paddingTop: 28 }}>
+                  <div style={{ borderTop: "1px solid #e2dcce", marginTop: 32, paddingTop: 28 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                       <div>
                         <h3 style={sectionTitleStyle}>Project Links & Environments</h3>
-                        <p style={{ fontSize: 12, color: "#64748b", margin: "4px 0 0" }}>
+                        <p style={{ fontSize: 12, color: "#6e645a", margin: "4px 0 0" }}>
                           Test servers, dev links, and live URLs are added & managed inside the <strong>Django Admin Panel</strong>.
                         </p>
                       </div>
@@ -2373,18 +2379,18 @@ Project Image Data: ${projImageBase64 || ""}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 6,
-                          padding: "6px 14px", fontSize: 11, fontWeight: 700, color: "#00a2e8",
+                          background: "#f0ebe1", border: "1px solid #ded7c9", borderRadius: 6,
+                          padding: "6px 14px", fontSize: 11, fontWeight: 700, color: "#2b2520",
                           textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5
                         }}>
-                        <span>⚙️ Manage in Django Admin</span> ↗
+                        <span>Manage in Django Admin</span> ↗
                       </a>
                     </div>
 
                     {/* Configured Links List (View Only) */}
                     <div style={{ marginTop: 10 }}>
                       {projLinks.length === 0 ? (
-                        <div style={{ padding: "16px", background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1", fontSize: 12, color: "#94a3b8", textAlign: "center" }}>
+                        <div style={{ padding: "16px", background: "#f7f4ee", borderRadius: 8, border: "1px dashed #ded7c9", fontSize: 12, color: "#8c8277", textAlign: "center" }}>
                           No server links configured yet for this project. Add them under <strong>Project Environments & Links</strong> in the Django Admin.
                         </div>
                       ) : (
@@ -2394,23 +2400,24 @@ Project Image Data: ${projImageBase64 || ""}
                             return (
                               <div key={idx} style={{
                                 display: "flex", alignItems: "center",
-                                padding: "10px 14px", background: "#fff", borderRadius: 8,
-                                border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+                                padding: "10px 14px", background: "#fffdfa", borderRadius: 8,
+                                border: "1px solid #e2dcce", boxShadow: "0 1px 3px rgba(43,37,32,0.02)"
                               }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflow: "hidden", flex: 1 }}>
                                   <span style={{
-                                    display: "inline-flex", alignItems: "center", gap: 4,
+                                    display: "inline-flex", alignItems: "center", gap: 5,
                                     background: b.bg, border: `1px solid ${b.border}`, color: b.text,
-                                    padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 800, whiteSpace: "nowrap"
+                                    padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap"
                                   }}>
-                                    {b.icon} {link.title || b.label}
+                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: b.dot }} />
+                                    {link.title || b.label}
                                   </span>
-                                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#00a2e8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600, textDecoration: "none" }} title={link.url}>
+                                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#234d70", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600, textDecoration: "none" }} title={link.url}>
                                     {link.url} ↗
                                   </a>
                                   {(link.note || link.remarks) && (
-                                    <span style={{ fontSize: 11, color: "#64748b", background: "#f1f5f9", padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={link.note || link.remarks}>
-                                      💬 {link.note || link.remarks}
+                                    <span style={{ fontSize: 11, color: "#5e554d", background: "#f0ebe1", border: "1px solid #e2dcce", padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={link.note || link.remarks}>
+                                      {link.note || link.remarks}
                                     </span>
                                   )}
                                 </div>
@@ -2842,11 +2849,11 @@ Project Image Data: ${projImageBase64 || ""}
                             
                             return (
                               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px dashed #e2e8f0" }}>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: "#8c8277", textTransform: "uppercase", letterSpacing: 0.5 }}>
                                   Environments:
                                 </span>
                                 {pLinks.length === 0 ? (
-                                  <span style={{ fontSize: 12, color: "#94a3b8" }}>No server links configured yet</span>
+                                  <span style={{ fontSize: 12, color: "#8c8277" }}>No server links configured yet</span>
                                 ) : (
                                   pLinks.map((link, idx) => {
                                     const b = getEnvBadgeInfo(link.env, link.title);
@@ -2863,17 +2870,17 @@ Project Image Data: ${projImageBase64 || ""}
                                           background: b.bg, border: `1px solid ${b.border}`, color: b.text,
                                           padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700,
                                           textDecoration: "none", transition: "all 0.15s",
-                                          boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
+                                          boxShadow: "0 1px 2px rgba(43,37,32,0.03)"
                                         }}
                                         onMouseEnter={e => {
                                           e.currentTarget.style.transform = "translateY(-1px)";
-                                          e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.08)";
+                                          e.currentTarget.style.boxShadow = "0 2px 6px rgba(43,37,32,0.08)";
                                         }}
                                         onMouseLeave={e => {
                                           e.currentTarget.style.transform = "none";
-                                          e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.03)";
+                                          e.currentTarget.style.boxShadow = "0 1px 2px rgba(43,37,32,0.03)";
                                         }}>
-                                        <span style={{ fontSize: 11 }}>{b.icon}</span>
+                                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: b.dot }} />
                                         <span>{link.title || b.label}</span>
                                         {linkNote && (
                                           <span style={{ opacity: 0.85, fontWeight: 500, fontSize: 11, borderLeft: `1px solid ${b.border}`, paddingLeft: 6, marginLeft: 2 }}>

@@ -440,17 +440,17 @@ class ProjectAdmin(admin.ModelAdmin):
                 'margin_pct': cw_margin_pct,
             })
 
-        # Category breakdown with color tags
+        # Category breakdown with warm, eye-friendly colors
         cat_meta = {
-            'HOSTING': ('☁️ Hosting & Cloud', '#0ea5e9'),
-            'DOMAIN': ('🌐 Domain Registration', '#10b981'),
-            'DATABASE': ('🗄️ Database & Storage', '#8b5cf6'),
-            'EMAIL_SMS': ('✉️ Email, SMS & WhatsApp', '#f59e0b'),
-            'SSL_SECURITY': ('🔒 SSL & Security', '#06b6d4'),
-            'SOFTWARE_LICENSE': ('💻 Software Licenses', '#ec4899'),
-            'API_AI': ('🤖 API & AI Usage', '#6366f1'),
-            'MAINTENANCE': ('🛠️ Infrastructure Support', '#64748b'),
-            'OTHER': ('📦 Other Platform Cost', '#71717a'),
+            'HOSTING': ('Hosting & Cloud', '#234d70'),
+            'DOMAIN': ('Domain Registration', '#1e4d2b'),
+            'DATABASE': ('Database & Storage', '#4a3e35'),
+            'EMAIL_SMS': ('Email, SMS & WhatsApp', '#5e554d'),
+            'SSL_SECURITY': ('SSL & Security', '#1f6d65'),
+            'SOFTWARE_LICENSE': ('Software Licenses', '#6b5a4e'),
+            'API_AI': ('API & AI Usage', '#3f3a5a'),
+            'MAINTENANCE': ('Infrastructure Support', '#362e29'),
+            'OTHER': ('Other Platform Cost', '#8c8277'),
         }
 
         category_breakdown = []

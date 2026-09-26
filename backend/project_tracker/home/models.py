@@ -135,11 +135,11 @@ class Project(models.Model):
 
 class ProjectLink(models.Model):
     ENV_CHOICES = [
-        ("prod", "🟢 Production (Live)"),
-        ("test", "🟠 Test Server"),
-        ("dev", "🔵 Development"),
-        ("staging", "🟣 Staging"),
-        ("other", "⚪ Other / Custom"),
+        ("prod", "Production (Live)"),
+        ("test", "Test Server"),
+        ("dev", "Development"),
+        ("staging", "Staging"),
+        ("other", "Other / Custom"),
     ]
 
     project = models.ForeignKey(
@@ -389,15 +389,15 @@ def sync_project_links_field(sender, instance, **kwargs):
 
 class ClientBill(models.Model):
     CATEGORY_CHOICES = [
-        ("HOSTING", "☁️ Hosting & Cloud Server"),
-        ("DOMAIN", "🌐 Domain Registration / Renewal"),
-        ("DATABASE", "🗄️ Database & Storage"),
-        ("EMAIL_SMS", "✉️ Email, SMS & WhatsApp API"),
-        ("SSL_SECURITY", "🔒 SSL, WAF & Security"),
-        ("SOFTWARE_LICENSE", "💻 Software & Tool License"),
-        ("API_AI", "🤖 API & AI Model Usage"),
-        ("MAINTENANCE", "🛠️ Maintenance & Infrastructure"),
-        ("OTHER", "📦 Other Platform Expense"),
+        ("HOSTING", "Hosting & Cloud Server"),
+        ("DOMAIN", "Domain Registration / Renewal"),
+        ("DATABASE", "Database & Storage"),
+        ("EMAIL_SMS", "Email, SMS & WhatsApp API"),
+        ("SSL_SECURITY", "SSL, WAF & Security"),
+        ("SOFTWARE_LICENSE", "Software & Tool License"),
+        ("API_AI", "API & AI Model Usage"),
+        ("MAINTENANCE", "Maintenance & Infrastructure"),
+        ("OTHER", "Other Platform Expense"),
     ]
 
     BILLING_CYCLE_CHOICES = [
@@ -409,18 +409,18 @@ class ClientBill(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ("PAID", "✅ Paid"),
-        ("PENDING", "⏳ Payment Pending"),
-        ("OVERDUE", "⚠️ Overdue"),
-        ("RENEWED", "🔄 Renewed"),
-        ("CANCELLED", "❌ Cancelled / Expired"),
+        ("PAID", "Paid"),
+        ("PENDING", "Payment Pending"),
+        ("OVERDUE", "Overdue"),
+        ("RENEWED", "Renewed"),
+        ("CANCELLED", "Cancelled / Expired"),
     ]
 
     CURRENCY_CHOICES = [
-        ("INR", "₹ INR"),
-        ("USD", "$ USD"),
-        ("EUR", "€ EUR"),
-        ("GBP", "£ GBP"),
+        ("INR", "INR (₹)"),
+        ("USD", "USD ($)"),
+        ("EUR", "EUR (€)"),
+        ("GBP", "GBP (£)"),
         ("AED", "AED"),
     ]
 
