@@ -52,19 +52,24 @@ class ClientBillAdmin(admin.ModelAdmin):
     project_display.short_description = "Project"
 
     def cost_display(self, obj):
-        return format_html('<strong style="color:#fff;font-family:monospace;">₹{:,.2f}</strong>', obj.cost_amount or 0)
+        amt = f"{obj.cost_amount or 0:,.2f}"
+        return format_html('<strong style="color:#2b2520;font-family:monospace;">₹{}</strong>', amt)
     cost_display.short_description = "Cost"
 
     def client_charge_display(self, obj):
-        return format_html('<strong style="color:#10b981;font-family:monospace;">₹{:,.2f}</strong>', obj.client_charge_amount or 0)
+        amt = f"{obj.client_charge_amount or 0:,.2f}"
+        return format_html('<strong style="color:#10b981;font-family:monospace;">₹{}</strong>', amt)
     client_charge_display.short_description = "Billed"
 
     def margin_display(self, obj):
         margin = (obj.client_charge_amount or 0) - (obj.cost_amount or 0)
         color = "#10b981" if margin >= 0 else "#ef4444"
         pct = obj.margin_percentage
-        sign = "+" if margin >= 0 else ""
-        return format_html('<span style="color:{};font-weight:700;font-family:monospace;">{}₹{:,.2f} ({}%)</span>', color, sign, margin, pct)
+        if margin < 0:
+            formatted_margin = f"-₹{abs(margin):,.2f}"
+        else:
+            formatted_margin = f"+₹{margin:,.2f}"
+        return format_html('<span style="color:{};font-weight:700;font-family:monospace;">{} ({}%)</span>', color, formatted_margin, pct)
     margin_display.short_description = "Margin"
 
     def due_date_display(self, obj):
