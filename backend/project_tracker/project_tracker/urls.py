@@ -6,7 +6,7 @@ from django.views.static import serve
 
 from urllib.parse import quote
 from django.http import HttpResponseRedirect
-from home.views import CustomAdminLoginView
+from home.views import CustomAdminLoginView, custom_admin_logout_view
 
 FRONTEND_PUBLIC_DIR = os.path.abspath(os.path.join(settings.BASE_DIR, '..', '..', 'frontend', 'public'))
 
@@ -28,6 +28,7 @@ admin.site.index = _gated_admin_index
 
 urlpatterns = [
     path('admin/login/', CustomAdminLoginView.as_view(), name='admin_login'),
+    path('admin/logout/', custom_admin_logout_view, name='admin_logout'),
     path('admin/', admin.site.urls),
     path('api/', include('home.urls')),
     re_path(r'^(?P<path>(manifest\.json|sw\.js|icons/.*))$', serve, {'document_root': FRONTEND_PUBLIC_DIR}),

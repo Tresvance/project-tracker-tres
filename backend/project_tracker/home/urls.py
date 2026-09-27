@@ -1,6 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProjectViewSet, TimesheetViewSet, TaskViewSet, AdminLoginViewSet, ChangeRequestViewSet, github_webhook, admin_login_view
+from .views import (
+    ProjectViewSet,
+    TimesheetViewSet,
+    TaskViewSet,
+    AdminLoginViewSet,
+    ChangeRequestViewSet,
+    github_webhook,
+    admin_login_view,
+    admin_logout_view,
+)
 
 router = DefaultRouter()
 router.register(r'home', ProjectViewSet)
@@ -14,4 +23,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('github-webhook/', github_webhook, name='github-webhook'),
     path('admin-login/', admin_login_view, name='admin-login'),
+    path('admin-logout/', admin_logout_view, name='admin-logout'),
 ]

@@ -1,6 +1,6 @@
 from urllib.parse import quote
 from django.contrib.auth.views import LoginView
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -31,7 +31,11 @@ class CustomAdminLoginView(LoginView):
     redirect_authenticated_user = False
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+        if request.GET.get('switch') or request.GET.get('logout'):
+            auth_logout(request)
+            if hasattr(request, 'session'):
+                request.session.flush()
+        elif request.user.is_authenticated:
             if request.user.is_superuser:
                 return HttpResponseRedirect(reverse('admin:index'))
             else:
@@ -282,6 +286,29 @@ def admin_login_view(request):
         return Response({"success": True, "name": user.name})
     else:
         return Response({"success": False, "error": "Invalid credentials"})
+
+
+@api_view(['POST', 'GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def admin_logout_view(request):
+    auth_logout(request)
+    if hasattr(request, 'session'):
+        request.session.flush()
+    return Response({"success": True, "message": "Logged out successfully"})
+
+
+def custom_admin_logout_view(request):
+    auth_logout(request)
+    if hasattr(request, 'session'):
+        request.session.flush()
+    host = request.get_host()
+    referer = request.META.get('HTTP_REFERER', '')
+    if '8000' in host and '5173' not in referer and '5173' not in host:
+        frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        return HttpResponseRedirect(f"{frontend_base}/")
+    return HttpResponseRedirect('/admin/login/?switch=1')
+
 
 
 @api_view(['POST'])

@@ -418,13 +418,19 @@ export default function App() {
       });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsAuthenticated(false);
     localStorage.removeItem("admin_authenticated");
     localStorage.removeItem("admin_logged_in_name");
     setView("portal");
     localStorage.setItem("app_view", "portal");
-    axios.get("/admin/logout/").catch(() => { });
+    try {
+      await axios.post("/api/admin-logout/");
+    } catch {
+      try {
+        await axios.get("/admin/logout/");
+      } catch {}
+    }
   };
 
   // Add Tags on Enter
@@ -1170,7 +1176,7 @@ Project Image Data: ${projImageBase64 || ""}
                     PM Dashboard
                   </button>
                 ) : (
-                  <a href="/admin/login/"
+                  <a href="/admin/login/?switch=1"
                     style={{
                       background: "#1e293b", color: "#ffffff", border: "1px solid #1e293b",
                       padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
@@ -1178,7 +1184,7 @@ Project Image Data: ${projImageBase64 || ""}
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = "#0f172a"}
                     onMouseLeave={e => e.currentTarget.style.background = "#1e293b"}>
-                    Login
+                    Admin Login
                   </a>
                 )}
               </div>
